@@ -1,0 +1,388 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>propagate_spyre_tensor_layouts — Data Flow</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; background: #ffffff; color: #1f2328; max-width: 800px; margin: 0 auto; padding: 32px 24px 48px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; border-left: 3px solid #3b82d4; padding-left: 10px; }
+  h3 { font-size: 13px; font-weight: 700; margin: 18px 0 6px; color: #3b82d4; }
+
+  /* Phase cards */
+  .phase { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+  .phase-header { display: flex; align-items: baseline; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #e5e7eb; background: #f0f3f8; }
+  .phase-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #3b82d4; white-space: nowrap; }
+  .phase-title { font-weight: 600; font-size: 14px; }
+  .phase-loc { font-size: 11px; color: #57606a; margin-left: auto; white-space: nowrap; font-family: ui-monospace, monospace; }
+  .phase-body { padding: 12px 14px; }
+
+  /* Code blocks */
+  pre { background: #1f2328; color: #e6edf3; border-radius: 5px; padding: 12px 14px; overflow-x: auto; font-size: 12.5px; line-height: 1.55; margin: 8px 0; }
+  .kw  { color: #ff7b72; }
+  .cm  { color: #8b949e; font-style: italic; }
+  .fn  { color: #d2a8ff; }
+  .at  { color: #79c0ff; }
+  .st  { color: #a5d6ff; }
+  .nu  { color: #f2cc60; }
+
+  /* Flow table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+  th { background: #f0f3f8; text-align: left; padding: 6px 10px; font-weight: 700; border: 1px solid #e5e7eb; }
+  td { padding: 6px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  td code, th code { font-family: ui-monospace, monospace; font-size: 12px; background: #f0f3f8; border-radius: 3px; padding: 1px 4px; }
+  tr:nth-child(even) td { background: #f7f8fa; }
+
+  /* Inline code */
+  code { font-family: ui-monospace, monospace; font-size: 12px; background: #f0f3f8; border-radius: 3px; padding: 1px 4px; }
+
+  /* Arrow connector */
+  .arrow { text-align: center; color: #57606a; font-size: 18px; margin: 4px 0; }
+
+  /* Dispatch table */
+  .dispatch { border: 1px solid #e5e7eb; border-radius: 5px; overflow: hidden; margin: 10px 0; }
+  .dispatch-row { display: grid; grid-template-columns: 220px 1fr; border-bottom: 1px solid #e5e7eb; }
+  .dispatch-row:last-child { border-bottom: none; }
+  .dispatch-cond { padding: 7px 12px; background: #f0f3f8; font-family: ui-monospace, monospace; font-size: 12px; border-right: 1px solid #e5e7eb; display: flex; align-items: center; }
+  .dispatch-fn   { padding: 7px 12px; font-family: ui-monospace, monospace; font-size: 12px; color: #7c5cd8; display: flex; align-items: center; }
+
+  /* Side-effect box */
+  .side-effect { background: #fff8e1; border: 1px solid #ffe082; border-radius: 5px; padding: 8px 12px; font-size: 13px; margin: 8px 0; }
+  .side-effect strong { color: #b45309; }
+
+  /* Data flow connector table */
+  .flow-list { list-style: none; }
+  .flow-list li { padding: 4px 0; padding-left: 20px; position: relative; font-size: 13px; }
+  .flow-list li::before { content: "→"; position: absolute; left: 0; color: #3b82d4; font-weight: 700; }
+
+  .note { font-size: 12px; color: #57606a; margin-top: 6px; font-style: italic; }
+
+  footer { margin-top: 48px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #57606a; }
+</style>
+</head>
+<body>
+
+<h1>propagate_spyre_tensor_layouts</h1>
+<p class="subtitle">Step-by-step data flow trace — <code>torch_spyre/_inductor/propagate_layouts.py</code></p>
+
+
+<h2>Overview</h2>
+<p>The pass has two phases: <strong>seed</strong> graph inputs with real on-device STLs, then <strong>walk</strong> operations in topological order and propagate candidate output STLs via <code>compute_layouts</code>. The attribute <code>.layouts</code> written by each iteration is the only communication channel between iterations.</p>
+
+<pre>
+<span class="fn">propagate_spyre_tensor_layouts</span>(graph)
+  │
+  ├─ <span class="cm">Phase 1 (lines 990–1018): seed graph inputs</span>
+  │   real_tensor.<span class="fn">device_tensor_layout</span>() → tb.layouts = [stl]
+  │
+  └─ <span class="cm">Phase 2 (line 1023): for op in operations (topological):</span>
+      │
+      ├─ op.<span class="fn">decide_layout</span>()          <span class="cm">← ask Inductor for host-side FixedLayout</span>
+      ├─ rw = op.<span class="fn">get_read_writes</span>()
+      ├─ output_dep = rw.writes[0]
+      ├─ args = <span class="fn">_get_prop_args</span>(rw.reads)
+      │       │
+      │       └─ <span class="cm">for each read buffer:</span>
+      │               buf.layouts   <span class="cm">← written by a previous loop iteration</span>
+      │           → PropArg(dep, host_layout, [stl, stl, ...])
+      │
+      ├─ output = op.<span class="fn">get_layout</span>()
+      │
+      └─ op.layouts = <span class="fn">compute_layouts</span>(op, output, output_dep, args)
+                      │
+                      ├─ <span class="cm">dispatches on op.data type (see dispatch table below)</span>
+                      ├─ <span class="cm">sets op.restick_cost_fn</span>
+                      └─ <span class="cm">returns list[SpyreTensorLayout]  → written to op.layouts</span>
+</pre>
+
+
+<h2>Phase 1 — Seed Graph Inputs</h2>
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Phase 1</span>
+    <span class="phase-title">Seed each graph-input TensorBox with its real on-device STL</span>
+    <span class="phase-loc">lines 990–1018</span>
+  </div>
+  <div class="phase-body">
+    <p>Before any operation is visited, every live Spyre tensor passed as a graph input has its concrete <code>SpyreTensorLayout</code> read from hardware and written onto the <code>TensorBox</code> as a single-element candidate list.</p>
+    <pre>
+<span class="kw">for</span> name, real_input <span class="kw">in</span> zip(graph.graph_input_names, V.<span class="fn">get_real_inputs</span>()):
+    <span class="kw">if not</span> isinstance(real_input, torch.Tensor): <span class="kw">continue</span>
+    <span class="kw">if</span> real_input.device.type != <span class="st">"spyre"</span>: <span class="kw">continue</span>   <span class="cm"># skip CPU scalars</span>
+
+    stl = real_input.<span class="fn">device_tensor_layout</span>()           <span class="cm"># ← reads actual STL from spyre tensor</span>
+    <span class="kw">if</span> stl <span class="kw">is</span> None:
+        <span class="kw">raise</span> Unsupported(...)
+
+    tb = graph.graph_inputs[name]                       <span class="cm"># TensorBox(StorageBox(InputBuffer))</span>
+    tb.layouts = [stl]                                  <span class="cm"># ← seeds the candidate list</span>
+    </pre>
+    <p class="note">This is the only place in the pass where STLs come from real hardware; everything downstream is derived from this seed.</p>
+  </div>
+</div>
+
+
+<h2>Phase 2 — Topological Walk</h2>
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Phase 2 · gate</span>
+    <span class="phase-title">Per-operation type dispatch</span>
+    <span class="phase-loc">lines 1023–1088</span>
+  </div>
+  <div class="phase-body">
+    <table>
+      <tr><th>Condition</th><th>Action on <code>op.layouts</code></th><th>Cost node</th></tr>
+      <tr><td><code>op.is_no_op()</code></td><td><code>generic_layout(op)</code></td><td><code>AnyInNode</code></td></tr>
+      <tr><td><code>ComputedBuffer</code> + <code>MutationLayoutSHOULDREMOVE</code></td><td>inherits target STL directly</td><td><code>AllSameNode</code></td></tr>
+      <tr><td><code>ComputedBuffer</code> (normal) + no propagatable args</td><td><code>_all_constant_layouts</code> or <code>generic_layout</code></td><td><code>AnyInNode</code></td></tr>
+      <tr><td><code>ComputedBuffer</code> + <code>Pointwise</code>/<code>Reduction</code> data</td><td><strong><code>compute_layouts(…)</code></strong></td><td>set inside handler</td></tr>
+      <tr><td><code>FallbackKernel</code></td><td><em>skipped — layout is in trailing MultiOutput nodes</em></td><td>—</td></tr>
+      <tr><td><code>MultiOutput</code></td><td><code>generic_layout(op)</code></td><td><code>AnyInNode</code></td></tr>
+      <tr><td><code>SpyreConstantFallback</code></td><td><code>generic_layout(op)</code></td><td><code>AnyInNode</code></td></tr>
+    </table>
+    <p>The main path for every compute op is the <code>ComputedBuffer + Pointwise/Reduction</code> row. The key setup before calling <code>compute_layouts</code>:</p>
+    <pre>
+op.<span class="fn">decide_layout</span>()                       <span class="cm"># lets Inductor pick host-side FixedLayout</span>
+rw     = op.<span class="fn">get_read_writes</span>()             <span class="cm"># read/write MemoryDep descriptors</span>
+output_dep = next(iter(rw.writes))         <span class="cm"># MemoryDep describing the output write</span>
+args       = <span class="fn">_get_prop_args</span>(rw.reads)     <span class="cm"># ← see Phase 3</span>
+output     = op.<span class="fn">get_layout</span>()              <span class="cm"># host-side FixedLayout of output tensor</span>
+
+op.layouts = <span class="fn">compute_layouts</span>(op, output, output_dep, args)
+    </pre>
+  </div>
+</div>
+
+
+<h2>Phase 3 — <code>_get_prop_args</code>: the inter-iteration bridge</h2>
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Bridge</span>
+    <span class="phase-title">Package input STL candidates from upstream ops into PropArg structs</span>
+    <span class="phase-loc">lines 99–116</span>
+  </div>
+  <div class="phase-body">
+    <p>For every <code>MemoryDep</code> in <code>rw.reads</code>:</p>
+    <pre>
+<span class="kw">for</span> arg <span class="kw">in</span> reads:
+    buf    = V.graph.<span class="fn">get_buffer</span>(arg.name)
+    layout = buf.<span class="fn">get_layout</span>()
+
+    <span class="kw">if</span> hasattr(buf, <span class="st">"layouts"</span>):
+        <span class="cm"># Written by a previous compute_layouts call — forward the candidate list</span>
+        res.append(PropArg(arg, layout, list(buf.layouts)))
+    <span class="kw">else</span>:
+        <span class="cm"># Already a finalised FixedTiledLayout (model weight, constant, …)</span>
+        res.append(PropArg(arg, layout, [layout.device_layout]))
+    </pre>
+    <div class="side-effect">
+      <strong>Key invariant:</strong> <code>buf.layouts</code> is written in Phase 2's loop body after <code>compute_layouts</code> returns. Because operations are in topological order, when we call <code>_get_prop_args</code> for op <em>N</em>, every buffer it reads from op <em>M &lt; N</em> already has <code>.layouts</code> populated.
+    </div>
+    <h3>PropArg fields</h3>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Meaning</th></tr>
+      <tr><td><code>dep</code></td><td><code>MemoryDep</code></td><td>Symbolic index expression for this input buffer read</td></tr>
+      <tr><td><code>layout</code></td><td><code>FixedLayout</code></td><td>Host-side shape / stride / dtype of this input</td></tr>
+      <tr><td><code>layouts</code></td><td><code>list[SpyreTensorLayout]</code></td><td>Candidate on-device STLs propagated from the buffer's producer</td></tr>
+    </table>
+  </div>
+</div>
+
+
+<h2>Phase 4 — <code>compute_layouts</code>: dispatch to specialised handlers</h2>
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Dispatch</span>
+    <span class="phase-title">Route to the right handler based on op type and reduction_type</span>
+    <span class="phase-loc">lines 745–824</span>
+  </div>
+  <div class="phase-body">
+    <div class="dispatch">
+      <div class="dispatch-row">
+        <div class="dispatch-cond">len(args) &gt; 1 &amp;&amp; Pointwise</div>
+        <div class="dispatch-fn">_multi_arg_pointwise_layouts</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">Reduction + BATCH_MATMUL_OP</div>
+        <div class="dispatch-fn">_matmul_layouts</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">Reduction + "exx2"</div>
+        <div class="dispatch-fn">_exx2_layout</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">Reduction + TOPK_OPS</div>
+        <div class="dispatch-fn">_topk_layouts</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">aten_op == layernormnorm</div>
+        <div class="dispatch-fn">_layernormnorm_layout</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">aten_op == aten.clone</div>
+        <div class="dispatch-fn">_clone_layout</div>
+      </div>
+      <div class="dispatch-row">
+        <div class="dispatch-cond">everything else (single-arg)</div>
+        <div class="dispatch-fn">_single_arg_op_layout  (called per candidate STL)</div>
+      </div>
+    </div>
+    <div class="side-effect">
+      <strong>Side-effect:</strong> every handler writes <code>op.restick_cost_fn</code> — the instruction consumed by the later <em>optimize-restickify</em> pass.
+    </div>
+  </div>
+</div>
+
+
+<h2>Phase 5 — Specialised layout handlers</h2>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_single_arg_op_layout — called once per candidate input STL</span>
+    <span class="phase-loc">lines 209–347</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li><strong>Reduction path:</strong> derive <code>x_dev_coords</code> and <code>x_stick_expr</code>; call <code>_output_stl_from_stick_expr</code> to try to preserve input layout; if offset or dimension collapses, scan all input dims to find a surviving output stick dim.</li>
+      <li><strong>Pointwise — type conversion (size change):</strong> check stick offset, rescale <code>c_size</code> to account for padding, build new <code>SpyreTensorLayout</code>.</li>
+      <li><strong>Pointwise — qfp8ch:</strong> propagate device layout and rescale <code>device_size / stride_map</code> for the fp16→fp8 element-count change.</li>
+      <li><strong>Pointwise — identical access:</strong> if <code>in_coords == out_coords</code> and same element size, copy device layout verbatim (just swap dtype).</li>
+      <li><strong>Pointwise — general:</strong> map input stick expression through output coordinates; fall back to <code>_candidate_output_stls</code> (enumerate non-last dims).</li>
+    </ul>
+    <p>Returns <code>list[SpyreTensorLayout]</code>; outer loop in <code>compute_layouts</code> extends results over all candidate input STLs, then attaches <code>AllSameNode</code> as cost function.</p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_multi_arg_pointwise_layouts — join point</span>
+    <span class="phase-loc">lines 582–691</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li>Collect all unique non-zero stick expressions from every candidate STL of every input arg.</li>
+      <li>Fast path: if all inputs have identical coords / size / dtype, propagate the device layout directly (<code>can_use_same_layout</code>).</li>
+      <li>For each offset-free stick expression, call <code>_try_stick_dim</code>: build a <code>dim_order</code> with that stick last, verify it is offset-free on <em>all</em> inputs (via <code>_is_supported_layout</code>).</li>
+      <li>If nothing survived, sweep alternative dims (non-last, divisible by <code>stick_size</code>).</li>
+      <li>Attaches <code>AllSameNode</code> — all inputs and output must share the same stick.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_matmul_layouts — fixed in/out stick constraints</span>
+    <span class="phase-loc">lines 516–579</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li>Identify x (Input1) and y (Input2) via <code>identify_matmul_inputs</code> (set-arithmetic on free symbols).</li>
+      <li><code>reduction_var</code> (K) = loop var present in x's index but absent from output's.</li>
+      <li><code>generated_var</code> (N) = loop var present in y's index and output's, absent from x's.</li>
+      <li>Call <code>find_stick_compatible_input_layout</code> for both: returns existing STL if already correct, else finds a restickify target (Pass 1 / Pass 2 inside that helper).</li>
+      <li>Output STL: stick on <code>generated_var</code> dim; construct <code>FixedInOutNode</code> with both required input STLs.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_exx2_layout / _layernormnorm_layout — fixed reduction-dim stick</span>
+    <span class="phase-loc">lines 421–464</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li>Both require input stick on the <strong>last logical (reduction) dim</strong>.</li>
+      <li>Call <code>_check_supported_input_sticks</code> — rejects offset sticks upfront.</li>
+      <li>Call <code>find_stick_compatible_input_layout</code> to find or compute the required input STL.</li>
+      <li>Output STL is fixed: <code>exx2</code> adds a trailing <code>-1</code> dim to <code>dim_order</code> and uses <code>ElementArrangement.EXX2</code>; <code>layernormnorm</code> uses standard row-major.</li>
+      <li>Both attach <code>FixedInOutNode</code> — the optimizer will insert a restickify before the op if the input doesn't already have the right stick.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_topk_layouts — reduction with surviving output coords</span>
+    <span class="phase-loc">lines 694–742</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li>Find <code>reduction_var</code> and <code>surviving_coords</code> (input coords whose symbols map to output dims).</li>
+      <li>For each candidate input STL: if stick carries <code>reduction_var</code>, every surviving coord becomes a candidate output stick dim; otherwise map the stick expr directly to an output dim.</li>
+      <li>Build one <code>SpyreTensorLayout</code> per candidate output stick dim.</li>
+      <li>Attaches <code>AllSameNode</code>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Handler</span>
+    <span class="phase-title">_clone_layout — materialise contiguous row-major buffer</span>
+    <span class="phase-loc">lines 349–418</span>
+  </div>
+  <div class="phase-body">
+    <ul class="flow-list">
+      <li><strong>Case 1 (offset-free stick):</strong> output is standard row-major; no restickify insertion needed — attach <code>AnyInNode</code>.</li>
+      <li><strong>Case 2 (stick has offset):</strong> scan <code>_candidate_output_stls</code> for an alternative stick dim; for each candidate compute whether the input <em>can</em> be restickified to that target via <code>compute_restickify_target_layout</code>; attach <code>FixedInOutNode</code> so the optimizer inserts a pre-restickify.</li>
+    </ul>
+  </div>
+</div>
+
+
+<h2>Phase 6 — Write-back &amp; downstream pickup</h2>
+<div class="phase">
+  <div class="phase-header">
+    <span class="phase-tag">Write-back</span>
+    <span class="phase-title">op.layouts written; read back by _get_prop_args for downstream ops</span>
+    <span class="phase-loc">line 1067 (write) / line 110–111 (read)</span>
+  </div>
+  <div class="phase-body">
+    <pre>
+<span class="cm"># line 1067 — write</span>
+op.layouts = <span class="fn">compute_layouts</span>(op, output, output_dep, args)
+<span class="cm"># list[SpyreTensorLayout] is now an attribute on the IR node</span>
+
+<span class="cm"># line 110–111 — read back by the NEXT op's _get_prop_args call</span>
+<span class="kw">if</span> hasattr(buf, <span class="st">"layouts"</span>):
+    res.append(<span class="fn">PropArg</span>(arg, layout, list(buf.layouts)))
+    </pre>
+    <p>The loop ends with a call to <code>_resolve_copy_back_candidates(operations)</code> (line 1090) which finalises the layout candidates for tensors that must be copied back to host.</p>
+  </div>
+</div>
+
+
+<h2>Key helper functions</h2>
+<table>
+  <tr><th>Function</th><th>Lines</th><th>Purpose</th></tr>
+  <tr><td><code>_output_stl_from_stick_expr</code></td><td>137–149</td><td>If stick_expr is offset-free, map it to the right output dim and build an STL. Returns <code>None</code> on offset — caller falls back to scanning.</td></tr>
+  <tr><td><code>_make_output_stl</code></td><td>152–166</td><td>Build candidate STL with a given dim last; verify the resulting device stick is offset-free.</td></tr>
+  <tr><td><code>_candidate_output_stls</code></td><td>169–188</td><td>Enumerate all non-last dims as candidate stick dims, returning valid STLs.</td></tr>
+  <tr><td><code>_pick_stick_dim</code></td><td>131–134</td><td>Map a stick sympy expression → output dimension index via <code>matching_dim</code>.</td></tr>
+  <tr><td><code>_compute_dim_order</code></td><td>123–128</td><td>Build <code>dim_order</code> list with the stick dim last; size-1 broadcast dims pushed right.</td></tr>
+  <tr><td><code>_check_supported_input_sticks</code></td><td>191–206</td><td>Guard for fixed-layout ops: raises <code>Unsupported</code> if any input STL has a stick with a constant offset.</td></tr>
+  <tr><td><code>find_stick_compatible_input_layout</code></td><td>475–513</td><td>Find the required input STL for matmul / exx2 / layernormnorm: Pass 1 = already correct stick, Pass 2 = can restickify.</td></tr>
+  <tr><td><code>_all_constant_layouts</code></td><td>827–853</td><td>Return one STL per valid stick dim for constant-valued ops (no real memory layout).</td></tr>
+  <tr><td><code>generic_layout</code></td><td>854–859</td><td>Fallback: extract the single STL from the op's already-finalised <code>FixedTiledLayout</code>.</td></tr>
+</table>
+
+
+<h2>Restick cost functions (set as side-effect)</h2>
+<table>
+  <tr><th>Cost node</th><th>Semantics</th><th>Set by</th></tr>
+  <tr><td><code>AllSameNode</code></td><td>All inputs and the output must share the same stick. Optimizer minimises restickify insertions.</td><td><code>_single_arg_op_layout</code>, <code>_multi_arg_pointwise_layouts</code>, <code>_topk_layouts</code></td></tr>
+  <tr><td><code>FixedInOutNode</code></td><td>Requires specific input STL(s) and produces a fixed output STL. Optimizer may insert pre-op restickify.</td><td><code>_matmul_layouts</code>, <code>_exx2_layout</code>, <code>_layernormnorm_layout</code>, <code>_clone_layout</code> (Case 2)</td></tr>
+  <tr><td><code>AnyInNode</code></td><td>No restickify constraint — output layout is independent of inputs.</td><td>no-ops, constants, <code>MultiOutput</code>, <code>_clone_layout</code> (Case 1)</td></tr>
+</table>
+
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

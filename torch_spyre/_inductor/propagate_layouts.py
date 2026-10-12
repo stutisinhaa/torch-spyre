@@ -2686,6 +2686,12 @@ def propagate_spyre_tensor_layouts(
     if len(graph.graph_input_names) > 0:
         for name, real_input in zip(graph.graph_input_names, V.get_real_inputs()):
             if isinstance(real_input, torch.Tensor):
+                # CPU tensors (e.g. scalar masks, float64 scalars passed as
+                # graph inputs in a Spyre compile) don't have a
+                # device_tensor_layout.  Skip them — their FixedLayout is
+                # already correct and no Spyre layout promotion is needed.
+                if real_input.device.type != "spyre":
+                    continue
                 stl = real_input.device_tensor_layout()
                 if stl is None:
                     # A CPU tensor lifted as a graph input, or a host tensor

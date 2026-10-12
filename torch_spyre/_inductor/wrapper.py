@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from typing import Optional
 
 import sympy
@@ -30,6 +31,7 @@ from .errors import Unsupported
 from .ir import FixedTiledLayout
 
 
+<<<<<<< Updated upstream
 class _SpyreWrapperCodegenMixin(PythonWrapperCodegen):
     """Spyre wrapper-codegen behavior shared by the top-level graph wrapper and
     the invoke_subgraph wrapper.
@@ -47,10 +49,140 @@ class _SpyreWrapperCodegenMixin(PythonWrapperCodegen):
         # Spyre device layout is not fully visible to Inductor, so its loop
         # simplification would be wrong (see noop_simplify_loops_impl). Applied
         # per GraphLowering, so the subgraph's own sizevars is patched too.
+=======
+class SpyreSubgraphPythonWrapperCodegen(SubgraphPythonWrapperCodegen):
+    """Custom subgraph wrapper that supports generate_const_tensor_fallback."""
+
+    def generate_const_tensor_fallback(self, node):
+        # Check if we're in mock device mode
+        if os.environ.get("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+            # In mock mode, create tensor and move to spyre device (MockSpyreTensor handles this)
+            value = node.constant_args[0]
+            dtype = node.layout.dtype
+            device = node.layout.device
+            self.writeline(f'{node.get_name()} = torch.tensor({value}, dtype={dtype}).to("{device}")')
+        else:
+            # Hardware mode: use spyre_constant_tensor
+            value = node.constant_args[0]
+            dtype = node.layout.dtype
+            device = node.layout.device
+            self.writeline(
+                f'{node.get_name()} = spyre_constant_tensor({value}, torch.device("{device}"), {dtype})'
+            )
+
+
+class SpyrePythonWrapperCodegen(PythonWrapperCodegen):
+    def __init__(self):
+        super().__init__()
+>>>>>>> Stashed changes
         V.graph.sizevars._simplify_loops_impl = noop_simplify_loops_impl.__get__(
             V.graph.sizevars, SizeVarAllocator
         )
 
+<<<<<<< Updated upstream
+=======
+    @staticmethod
+    def create(
+        is_subgraph: bool,
+        subgraph_name: Optional[str],
+        parent_wrapper: Optional[PythonWrapperCodegen],
+        partition_signatures: Optional[GraphPartitionSignature] = None,
+    ):
+        if is_subgraph:
+            assert subgraph_name is not None
+            assert parent_wrapper is not None
+            return SpyreSubgraphPythonWrapperCodegen(
+                subgraph_name, parent_wrapper, partition_signatures
+            )
+        return SpyrePythonWrapperCodegen()
+
+    def write_header(self) -> None:
+        super().write_header()
+        self.imports.splice(
+            """
+                from sympy import sympify
+                from torch_spyre._inductor.op_spec import TensorArg, OpSpec, UnimplementedOp, LoopSpec, spyre_constant_tensor, IndirectAccess
+                from torch_spyre.execution.async_compile import SpyreAsyncCompile
+                from torch_spyre._C import DataFormats, SpyreTensorLayout, spyre_empty_with_layout
+                import subprocess
+            """,
+            strip=True,
+        )
+        self.header.writeline(
+            "from torch_spyre._C import reinterpret_tensor as reinterpret_tensor"
+        )
+        self.header.writeline(
+            "from torch_spyre._C import reinterpret_tensor_with_layout"
+        )
+        self.header.writeline("del async_compile")
+        self.header.writeline("async_compile = SpyreAsyncCompile()")
+
+    def generate(self, is_inference):
+        """Override to add pool allocation/deallocation around kernel calls."""
+        result_tuple = super().generate(is_inference)
+        wrapper_value_with_linemap, kernel_decls = result_tuple
+
+        # Build a map of {real_buf: alias_buf} for MutationLayoutSHOULDREMOVE
+        # buffers that were removed.  When the scheduler stores a reduction into
+        # a pre-allocated buffer (e.g. buf1 = empty_default, buf0 = matmul result
+        # mutating buf1), buf0 is added to removed_buffers and the kernel writes
+        # to buf1.  The generated return statement still references buf0, so we
+        # must emit "buf0 = buf1" after the buf1 allocation to define the alias.
+        scheduler = getattr(V.graph, "scheduler", None)
+        mutation_real_name = (
+            getattr(scheduler, "mutation_real_name", {}) if scheduler else {}
+        )
+        removed = V.graph.removed_buffers
+        alias_map = {
+            real: alias
+            for alias, real in mutation_real_name.items()
+            if alias in removed
+        }
+
+        needs_str_edit = alias_map or getattr(V.graph, "pool_size", 0) > 0
+        if needs_str_edit:
+            wrapper_str = str(wrapper_value_with_linemap.value)
+            lines = wrapper_str.split("\n")
+
+            # Insert "alias = real" after each "real = spyre_empty_with_layout(...)"
+            # line so that removed mutation buffers are defined in the generated code.
+            if alias_map:
+                i = 0
+                while i < len(lines):
+                    stripped = lines[i].strip()
+                    for real_name, alias_name in alias_map.items():
+                        if stripped.startswith(f"{real_name} = spyre_empty_with_layout("):
+                            indent = len(lines[i]) - len(lines[i].lstrip())
+                            lines.insert(i + 1, " " * indent + f"{alias_name} = {real_name}")
+                            break
+                    i += 1
+
+            pool_size = getattr(V.graph, "pool_size", 0)
+            if pool_size > 0:
+                # Add `del _pool` before `return (` statement.
+                for i in range(len(lines) - 1, -1, -1):
+                    line = lines[i].strip()
+                    if line.startswith("return ("):
+                        indent = len(lines[i]) - len(lines[i].lstrip())
+                        lines.insert(i, " " * indent + "del _pool")
+                        break
+
+                # Add pool allocation before first kernel call (`.run(`).
+                pool_alloc_code = self.allocate_pool()
+                for i, line in enumerate(lines):
+                    if ".run(" in line:
+                        indent = len(line) - len(line.lstrip())
+                        lines.insert(i, " " * indent + pool_alloc_code)
+                        break
+
+            wrapper_str = "\n".join(lines)
+            wrapper_value_with_linemap = ValueWithLineMap(
+                value=wrapper_str, line_map=wrapper_value_with_linemap.line_map
+            )
+
+        return (wrapper_value_with_linemap, kernel_decls)
+
+>>>>>>> Stashed changes
     def make_buffer_allocation(self, buffer: BufferLike):
         layout = buffer.get_layout()
         if not isinstance(layout, FixedTiledLayout):
@@ -72,12 +204,21 @@ class _SpyreWrapperCodegenMixin(PythonWrapperCodegen):
         return out
 
     def generate_const_tensor_fallback(self, node):
-        value = node.constant_args[0]
-        dtype = node.layout.dtype
-        device = node.layout.device
-        self.writeline(
-            f'{node.get_name()} = spyre_constant_tensor({value}, torch.device("{device}"), {dtype})'
-        )
+        # Check if we're in mock device mode
+        if os.environ.get("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+            # In mock mode, create tensor and move to spyre device (MockSpyreTensor handles this)
+            value = node.constant_args[0]
+            dtype = node.layout.dtype
+            device = node.layout.device
+            self.writeline(f'{node.get_name()} = torch.tensor({value}, dtype={dtype}).to("{device}")')
+        else:
+            # Hardware mode: use spyre_constant_tensor
+            value = node.constant_args[0]
+            dtype = node.layout.dtype
+            device = node.layout.device
+            self.writeline(
+                f'{node.get_name()} = spyre_constant_tensor({value}, torch.device("{device}"), {dtype})'
+            )
 
     def _generate_extern_kernel_alloc_helper(self, extern_kernel, args):
         """Mark calls whose eager result is consumed inside this graph.

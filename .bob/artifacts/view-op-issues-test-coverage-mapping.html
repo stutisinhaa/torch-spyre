@@ -1,0 +1,686 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>View Op Issues — Test Coverage Mapping</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; background: #ffffff; color: #1f2328; padding: 32px 20px; }
+.container { max-width: 920px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.subtitle { color: #57606a; font-size: 13px; margin-bottom: 28px; }
+.stats-row { display: flex; gap: 14px; margin-bottom: 28px; flex-wrap: wrap; }
+.stat-box { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 18px; flex: 1; min-width: 130px; }
+.stat-num { font-size: 26px; font-weight: 700; }
+.stat-num.blue  { color: #3b82d4; }
+.stat-num.green { color: #16a34a; }
+.stat-num.amber { color: #d97706; }
+.stat-num.red   { color: #dc2626; }
+.stat-label { font-size: 12px; color: #57606a; margin-top: 2px; }
+
+.legend { display: flex; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; font-size: 12px; align-items: center; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.badge-strong  { background: #dcfce7; color: #166534; }
+.badge-related { background: #dbeafe; color: #1e40af; }
+.badge-weak    { background: #fef3c7; color: #92400e; }
+.badge-none    { background: #fee2e2; color: #991b1b; }
+.badge-xlsx    { background: #ede9fe; color: #4c1d95; }
+.badge-skip    { background: #fde8e8; color: #9b1c1c; }
+
+.group-header {
+  display: flex; align-items: flex-start; gap: 14px;
+  border: 1px solid #e5e7eb; border-radius: 8px;
+  padding: 14px 16px; margin: 24px 0 10px; background: #f7f8fa;
+}
+.group-badge {
+  font-size: 22px; font-weight: 800; min-width: 36px; text-align: center; padding-top: 2px;
+}
+.ga { color: #16a34a; }
+.gb { color: #3b82d4; }
+.gc { color: #dc2626; }
+.group-meta h2 { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.group-meta .group-def { font-size: 13px; color: #1f2328; margin-bottom: 3px; }
+.group-meta .group-note { font-size: 12px; color: #57606a; }
+.group-count { margin-left: auto; text-align: right; min-width: 90px; }
+.group-count .cnt { font-size: 22px; font-weight: 800; }
+.group-count .cnt-label { font-size: 11px; color: #57606a; }
+
+section { margin-bottom: 8px; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
+.section-header { display: flex; align-items: baseline; gap: 10px; padding: 9px 14px; background: #f7f8fa; border-bottom: 1px solid #e5e7eb; }
+.issue-num { font-weight: 700; font-size: 13px; color: #3b82d4; min-width: 90px; flex-shrink: 0; }
+.issue-title { font-size: 13px; color: #1f2328; flex: 1; }
+.matches { padding: 0 14px 10px 14px; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+th { text-align: left; padding: 5px 8px; background: #f7f8fa; border-bottom: 1px solid #e5e7eb; color: #57606a; font-weight: 600; }
+td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+td:first-child { font-weight: 600; color: #3b82d4; min-width: 50px; }
+.test-name { font-family: "SF Mono", "Fira Mono", monospace; font-size: 11px; color: #1f2328; }
+.file-ref { font-size: 11px; color: #57606a; font-style: italic; }
+.note-row td { color: #57606a; font-style: italic; font-size: 11px; }
+.note-row td:first-child { color: #57606a; font-weight: 400; }
+
+.no-match-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 0 4px; }
+.no-match-item { background: #fff0f0; border: 1px solid #fecaca; border-radius: 5px; padding: 6px 10px; font-size: 12px; }
+.no-match-item .nm-num { font-weight: 700; color: #dc2626; }
+.no-match-item .nm-title { color: #57606a; font-size: 11px; display: block; margin-top: 1px; }
+
+footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 12px; color: #57606a; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>View Op Issues — Test Coverage Mapping</h1>
+<p class="subtitle">Semantic search across 916 test functions + 326 xlsx entries  ·  69 issues from the "no issue# comment" pool analysed</p>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-num blue">69</div><div class="stat-label">Total issues analysed (no issue# comment in code)</div></div>
+  <div class="stat-box"><div class="stat-num green">11</div><div class="stat-label">Group A — direct op-named test exists</div></div>
+  <div class="stat-box"><div class="stat-num blue">36</div><div class="stat-label">Group B — related feature-area tests exist</div></div>
+  <div class="stat-box"><div class="stat-num red">22</div><div class="stat-label">Group C — no matching tests at all</div></div>
+</div>
+
+<div class="legend">
+  <strong>Confidence:</strong>
+  <span class="badge badge-strong">Strong — direct op/name match</span>
+  <span class="badge badge-related">Related — same feature area</span>
+  <span class="badge badge-weak">Weak — tangential keyword overlap</span>
+  <span class="badge badge-none">No match</span>
+  <span class="badge badge-xlsx">xlsx entry</span>
+  <span class="badge badge-skip">SKIP / XFAIL</span>
+</div>
+
+
+<div class="group-header">
+  <div class="group-badge ga">A</div>
+  <div class="group-meta">
+    <h2>Group A — Direct op-named test exists</h2>
+    <div class="group-def">A test function named after the exact op (e.g. <code>test_split_cpu</code>, <code>test_flatten_cpu</code>) already exists in the repo. The test exercises the operation but <strong>does not reference the issue number</strong> in any comment or decorator, so it was missed by the issue-comment scan.</div>
+    <div class="group-note">Action: link the issue number in a comment inside the test, or confirm the test truly covers the bug scenario.</div>
+  </div>
+  <div class="group-count"><span class="cnt ga">11</span><div class="cnt-label">issues</div></div>
+</div>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#267 / #1395</span>
+  <span class="issue-title">Enable torch.split / Enable/test torch.split for Q2 target models</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[strong]</td><td class="test-name">test_split_cpu(op, dim, index, x)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5687</td><td>Direct split op test</td></tr>
+<tr><td>[strong]</td><td class="test-name">LxPlanningTwoOpPointwiseAdditionTest.test_split_cpu_lx_planning</td><td class="file-ref">tests/inductor/test_inductor_ops_lx_planning.py (generated)</td><td>LX-planning variant</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#688</span>
+  <span class="issue-title">Implement aten::unfold</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[strong]</td><td class="test-name">test_unfold_cpu(dimension, size, step, x)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:6010</td><td>Direct unfold test. Docstring: ".contiguous() not tested as it currently fails."</td></tr>
+<tr><td>[skip]</td><td class="test-name">test_unfold_1d_* / test_unfold_2d_* / … (15 variants)</td><td class="file-ref">tests/inductor/test_inductor_ops_lx_planning.py:186–203</td><td>All in POINTWISE_TEST_FAILURES — skipped with issue #2346</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#731</span>
+  <span class="issue-title">Enable torch.flatten()</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[strong]</td><td class="test-name">test_flatten_cpu(start_dim, end_dim, x)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5283</td><td>Direct flatten test</td></tr>
+<tr><td>[skip]</td><td class="test-name">test_flatten_2d_full … test_flatten_4d_trailing (11 variants)</td><td class="file-ref">tests/inductor/test_inductor_ops_lx_planning.py:161–171</td><td>All in POINTWISE_TEST_FAILURES &amp; REDUCTION_TEST_FAILURES — comment: "span of 4 elements within 64-wide padded stick not supported. See PR #1866."</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1094</span>
+  <span class="issue-title">Enable/test torch.cat for Q2 &amp; Q3 target models</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_cat_cpu(dim, *tensors)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5378</td><td>Direct cat test</td></tr>
+<tr><td>[6]</td><td class="test-name">test_cat_after_at_plus_b()</td><td class="file-ref">tests/inductor/test_restickify.py:356</td><td>cat in restickify context</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1456</span>
+  <span class="issue-title">Enable/test torch.stack for Q2 target models</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_single_call_writes_multi_slot_chunk()</td><td class="file-ref">tests/inductor/test_overwrite.py:57</td><td>torch.stack present in test body</td></tr>
+<tr><td>[6]</td><td class="test-name">test_overwrite_f_in_compiled_loop()</td><td class="file-ref">tests/inductor/test_overwrite.py:215</td><td>torch.stack present in test body</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">No dedicated test_stack_cpu yet — these are the only tests that use torch.stack directly.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2564</span>
+  <span class="issue-title">Flatten ops fail when applying additional pointwise ops</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[skip]</td><td class="test-name">test_flatten_*_lx_planning (pointwise variants, 11 tests)</td><td class="file-ref">tests/inductor/test_inductor_ops_lx_planning.py:161–171</td><td>These are EXACTLY flatten + additional pointwise op tests — all currently SKIPPED in POINTWISE_TEST_FAILURES list</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">The skipped tests are the direct regression suite for this issue.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3287</span>
+  <span class="issue-title">GroupNorm Lowering Fails in split_multi_ops.py — KeyError</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_groupnorm(execution_mode, num_groups, dtype)</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:233</td><td>"Test GroupNorm with various group counts and dtypes."</td></tr>
+<tr><td>[9]</td><td class="test-name">test_groupnorm_affine(execution_mode)</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:263</td><td>GroupNorm with affine transformation</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2409</span>
+  <span class="issue-title">Avoid D2H → CPU resize_ → H2D round-trip in spyre_resize_ expand path</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[10]</td><td class="test-name">test_expand()</td><td class="file-ref">tests/tensor/test_resize.py:131</td><td>"Expand resize_ (D2H → CPU resize_ → H2D) preserves original elements verbatim." — docstring describes the exact issue scenario</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestResize.test_expand_original_elements_preserved[1d_4x / 2d_double_rows / …]</td><td class="file-ref">tests/tensor/test_resize.py</td><td>Parameterised variants — all in xlsx</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1781</span>
+  <span class="issue-title">Spyre RMSNorm is numerically wrong on non-contiguous [B,H,S,D] fp16 inputs</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_rms_norm()</td><td class="file-ref">tests/inductor/test_building_blocks.py:114</td><td>RMS norm building block</td></tr>
+<tr><td>[7]</td><td class="test-name">test_rmsnorm(execution_mode, eps, …)</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:110</td><td>"Test RMSNorm with various epsilon values and configurations."</td></tr>
+<tr><td>[7]</td><td class="test-name">test_rmsnorm_with_weight()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:128</td><td>"Test RMSNorm with learnable weight parameter."</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">None of these explicitly test non-contiguous fp16 input — the specific bug scenario is not yet covered.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3851</span>
+  <span class="issue-title">index_select uses only the first 32 entries of an index</span>
+  <span class="badge badge-strong">Strong</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_index_select_2d()</td><td class="file-ref">tests/inductor/test_propagate_named_dims.py:815</td><td>"torch.index_select(x, 0, i): x[M,N] gathered by i[P]." Tests layout propagation — does not exercise the &gt;32 entry truncation bug.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3138</span>
+  <span class="issue-title">Interleaved RoPE reshape [B, L, H, 2, D/2] fails to lower when D/2 &lt; 64</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_dtype_conversion_with_symbolic_dimensions()</td><td class="file-ref">tests/inductor/test_inductor_dtype_scalars.py:369</td><td>"Regression test for propagate_layouts" — same reshape + symbolic-dim context</td></tr>
+<tr><td>[6]</td><td class="test-name">test_rope_cpu(q, freqs)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5710</td><td>Direct RoPE test — does not exercise D/2 &lt; 64 edge case specifically</td></tr>
+</table>
+</div>
+</section>
+
+
+
+<div class="group-header">
+  <div class="group-badge gb">B</div>
+  <div class="group-meta">
+    <h2>Group B — Related feature-area tests exist</h2>
+    <div class="group-def">Tests covering the <strong>same feature area, op family, or compiler path</strong> as the issue, but not the specific failure scenario described. For example: a transpose numerical-correctness bug is in the same area as the transpose op tests, but those tests may pass without triggering the exact bug.</div>
+    <div class="group-note">Action: evaluate whether the existing tests would catch the bug, or whether a targeted regression test for the exact scenario is needed.</div>
+  </div>
+  <div class="group-count"><span class="cnt gb">36</span><div class="cnt-label">issues</div></div>
+</div>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1796</span>
+  <span class="issue-title">tensor.contiguous() after transpose not implemented — multi-head attention fails</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_flash_attention()</td><td class="file-ref">tests/inductor/test_building_blocks.py:159</td><td>Flash attention (uses transpose+contiguous internally)</td></tr>
+<tr><td>[9]</td><td class="test-name">test_hint_flash_attention()</td><td class="file-ref">tests/inductor/test_coarse_tile_e2e.py:769</td><td>"Flash attention tiled over H and Lk via nested spyre_hints"</td></tr>
+<tr><td>[9]</td><td class="test-name">test_attention_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5415</td><td>Attention op test</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_transpose_2d[dim_0_2 / dim_1_2 / …]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Transpose + non-contiguous variants in xlsx</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1722</span>
+  <span class="issue-title">InductorError: Unsupported memory span limit for mean reduction on view tensors</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[15]</td><td class="test-name">test_groupnorm()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:233</td><td>GroupNorm uses mean reduction over view tensors — same failure path</td></tr>
+<tr><td>[15]</td><td class="test-name">test_groupnorm_affine()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:263</td><td>GroupNorm with affine</td></tr>
+<tr><td>[7]</td><td class="test-name">test_instancenorm_affine()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:350</td><td>InstanceNorm with affine</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2791</span>
+  <span class="issue-title">aten.copy_ on tensor view corrupts tensor contents on Spyre backend</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_device_to_device_with_view()</td><td class="file-ref">tests/test_spyre.py:582</td><td>"Test more complex device-to-device copy using tensor.copy_() method."</td></tr>
+<tr><td>[7]</td><td class="test-name">test_d2h_copy_of_expanded_view()</td><td class="file-ref">tests/test_spyre.py:591</td><td>D2H copy of stride-0 broadcast view</td></tr>
+<tr><td>[7]</td><td class="test-name">test_d2h_copy_of_transposed_view()</td><td class="file-ref">tests/test_spyre.py:642</td><td>Transpose / column-major D2H</td></tr>
+<tr><td>[6]</td><td class="test-name">test_inplace_copy_noncontiguous_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5300</td><td>Inplace copy non-contiguous</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_inplace_copy[1d / 2d / 3d / bool / float2bool]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Non-contiguous copy variants</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#894 / #1333</span>
+  <span class="issue-title">Support non-zero storage offset of view-based eager ops / Add integrated storage offset support</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[12]</td><td class="test-name">test_d2h_copy_of_expanded_view()</td><td class="file-ref">tests/test_spyre.py:591</td><td>Expanded view copy — directly involves storage offset semantics</td></tr>
+<tr><td>[6]</td><td class="test-name">test_device_to_device_with_view()</td><td class="file-ref">tests/test_spyre.py:582</td><td>D2D copy with view</td></tr>
+<tr><td>[6]</td><td class="test-name">test_d2h_copy_of_transposed_view()</td><td class="file-ref">tests/test_spyre.py:642</td><td>D2H transposed view</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#1227</span>
+  <span class="issue-title">AssertionError: Tensor-likes are not close for upstream test_broadcast_to</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_d2h_copy_of_expanded_view()</td><td class="file-ref">tests/test_spyre.py:591</td><td>"D2H copy of a tensor with stride-0 (broadcast) dims must produce the broadcast values, not the underlying storage." — directly tests broadcast_to semantics</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3512</span>
+  <span class="issue-title">3x Performance Regression of Transposed MatMul over Regular MatMul</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_4d_matmul_xt_restickify_pads_y()</td><td class="file-ref">tests/inductor/test_padding.py:661</td><td>"4D matmul where x is transposed (forcing restickify) and K is unaligned." — closest structural match</td></tr>
+<tr><td>[6]</td><td class="test-name">test_scaled_qk_matmul_attention_scores()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:393</td><td>matmul(Q, K^T) / sqrt(d_k) scaled dot-product logits</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4033</span>
+  <span class="issue-title">Compiled index_select + matmul fails with RAS ComputeHardwareError</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_index_select_2d()</td><td class="file-ref">tests/inductor/test_propagate_named_dims.py:815</td><td>index_select + layout propagation</td></tr>
+<tr><td>[9]</td><td class="test-name">test_gather_advanced_indexing_2d()</td><td class="file-ref">tests/inductor/test_propagate_named_dims.py:761</td><td>x[i] advanced indexing with matmul context</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4050</span>
+  <span class="issue-title">Fused Graph silently corrupts data when reading slices of a transposed 4D view</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[skip]</td><td class="test-name">test_indexing_after_transpose() <span class="badge badge-skip">SKIP #1800</span></td><td class="file-ref">tests/inductor/test_inductor_transpose_edge.py:170</td><td>Directly tests indexing a transposed 4D tensor — same class of bug, currently skipped under #1800</td></tr>
+<tr><td>[skip]</td><td class="test-name">test_slicing_after_transpose() <span class="badge badge-skip">SKIP #1800</span></td><td class="file-ref">tests/inductor/test_inductor_transpose_edge.py:185</td><td>Slicing after transpose — same class</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3508</span>
+  <span class="issue-title">Strided scatter source and compiled symbolic narrow().copy_</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_d2h_copy_of_strided_slice()</td><td class="file-ref">tests/test_spyre.py:626</td><td>"D2H of a strided slice (e.g. t[::2]) must produce the slice's logical values."</td></tr>
+<tr><td>[6]</td><td class="test-name">test_index_copy_inplace_prefill()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5951</td><td>"index_copy_ prefill pattern — writes 14 tokens into KV-cache"</td></tr>
+<tr><td>[6]</td><td class="test-name">test_index_copy_inplace_decode()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5978</td><td>"index_copy_ decode pattern — writes 1 token into KV-cache"</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3265</span>
+  <span class="issue-title">D2D non-contiguous views (transpose / strided): hard compile error</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[10]</td><td class="test-name">test_attn_qkv_paths()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5755</td><td>QKV attention with transpose paths — exercises D2D non-contiguous</td></tr>
+<tr><td>[6]</td><td class="test-name">test_t_2d_contiguous_cpu() / test_transpose_2d_contiguous_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5172/5179</td><td>Transpose + .contiguous() variants</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_transpose_2d[*]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Multiple non-contiguous output transpose shapes</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3455</span>
+  <span class="issue-title">copy_from_d2d raises InductorError: Unexpected stick expression for any contiguous 2D tensor</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_t_2d_contiguous_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5172</td><td>Contiguous 2D transpose — same failure path</td></tr>
+<tr><td>[6]</td><td class="test-name">test_transpose_2d_contiguous_cpu(dim0, dim1, x)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5179</td><td>Contiguous 2D transpose</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_transpose_2d[*]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Various 2D shapes + non-contiguous output</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2278</span>
+  <span class="issue-title">Optimize inplace ops on sliced views to eliminate redundant copies</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_inplace_copy_noncontiguous_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5300</td><td>Inplace copy non-contiguous</td></tr>
+<tr><td>[6]</td><td class="test-name">test_index_copy_inplace_prefill() / test_index_copy_inplace_decode()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5951/5978</td><td>KV-cache inplace copy patterns</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_inplace_copy[1d / 2d / 3d / bool / float2bool]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Inplace copy variants in xlsx</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2526 / #4311</span>
+  <span class="issue-title">Non-contiguous (transposed) inputs fail to compile — fp8 / batchmatmulfp8 OpSpecValidationError</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_hint_restickify_stays_in_group()</td><td class="file-ref">tests/inductor/test_coarse_tile_e2e.py:668</td><td>Restickify + transpose in tiled group</td></tr>
+<tr><td>[strong]</td><td class="test-name">tests/inductor/test_fp8_operations.py (whole file)</td><td class="file-ref">tests/inductor/test_fp8_operations.py</td><td>FP8 operations test suite — no transposed input case confirmed</td></tr>
+<tr><td class="badge badge-xlsx" style="font-size:11px">[xlsx ×5]</td><td class="test-name">TestOps.test_transpose_2d[*]</td><td class="file-ref">tests/inductor/test_inductor_ops.py</td><td>Transpose 2D variants</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3225</span>
+  <span class="issue-title">Coarse tiled loop output tensor view + contiguous bug</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[7]</td><td class="test-name">test_matmul_tiled_y()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:4519</td><td>Tiled matmul — same coarse-tiling + view context</td></tr>
+<tr><td>[6]</td><td class="test-name">test_unfold_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:6010</td><td>Docstring: ".contiguous() not tested as it currently fails" — same contiguous-on-view failure class</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4292</span>
+  <span class="issue-title">flash-v4 tiling: restickify can't bridge nested stick dims (H nested in Lq)</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_hint_flash_attention()</td><td class="file-ref">tests/inductor/test_coarse_tile_e2e.py:769</td><td>"Flash attention tiled over H and Lk via nested spyre_hints" — same nested tiling context</td></tr>
+<tr><td>[6]</td><td class="test-name">test_hint_restickify_stays_in_group()</td><td class="file-ref">tests/inductor/test_coarse_tile_e2e.py:668</td><td>Restickify node inside hint scope</td></tr>
+<tr><td>[6+]</td><td class="test-name">test_restickify_* (whole file)</td><td class="file-ref">tests/inductor/test_restickify.py</td><td>Full restickify test suite</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4286</span>
+  <span class="issue-title">Fp32 matmul decomposition loses broadcast dimensions introduced by unsqueeze</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_d2h_copy_of_expanded_view()</td><td class="file-ref">tests/test_spyre.py:591</td><td>Stride-0 / broadcast dimension semantics</td></tr>
+<tr><td>[6]</td><td class="test-name">test_inductor_decomp_* (whole file)</td><td class="file-ref">tests/inductor/test_inductor_decomp.py</td><td>Decomposition tests — no fp32 matmul+unsqueeze case confirmed</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#2688 / #4093</span>
+  <span class="issue-title">LX-pinned clones drop per-access view offset / flat 1D clone incompatible with col-stick layout</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_generate_sdsc_two_cores_emits_kernel_derived_with_base_idx()</td><td class="file-ref">tests/inductor/test_coarse_tiling.py:3149</td><td>"second per-core tiled symbol should carry the index of the first (kernel_derived with base_idx)" — same SDSC address-gen area</td></tr>
+<tr><td>[6]</td><td class="test-name">test_matmul_tiled_y()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:4519</td><td>Tiled matmul + view context</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3417</span>
+  <span class="issue-title">Span-overflow planner raises Unsupported after exhausting 512 split candidates</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_symbolic_batch_dim_pointwise_split()</td><td class="file-ref">tests/inductor/test_codegen.py:80</td><td>"Symbolic batch dim must split by granularity not max_size (#2287). [s, 128] fp16 with s in [64, 128]" — planner split candidate context</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3916</span>
+  <span class="issue-title">F.pad / torch.cat fail on device when write offset isn't stick-aligned</span>
+  <span class="badge badge-related">Related</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_cat_cpu(dim, *tensors)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5378</td><td>Direct cat test — no stick-alignment edge case</td></tr>
+<tr><td>[6]</td><td class="test-name">test_generate_sdsc_two_cores_emits_kernel_derived_with_base_idx()</td><td class="file-ref">tests/inductor/test_coarse_tiling.py:3149</td><td>SDSC write-offset / address alignment context</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4254</span>
+  <span class="issue-title">torch.compile with torch.view_as_complex on Spyre causes SIGFPE</span>
+  <span class="badge badge-weak">Weak</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[9]</td><td class="test-name">test_complex_scalar_type_promotion() <span class="badge badge-skip">XFAIL</span></td><td class="file-ref">tests/inductor/test_inductor_dtype_scalars.py:461</td><td>"Real tensor multiplied by complex scalar promotes to complex." — complex dtype adjacent, different op</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">No test exercises torch.view_as_complex specifically.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#4271</span>
+  <span class="issue-title">Cost-model residency pricing credits a graph input's unavoidable clone-in read as saved</span>
+  <span class="badge badge-weak">Weak</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[3]</td><td class="test-name">test_mm_out_copy_back_into_input_is_elided()</td><td class="file-ref">tests/inductor/test_copy_back_elision.py:47</td><td>Copy-back elision logic — adjacent compiler cost model area</td></tr>
+<tr><td>[3]</td><td class="test-name">test_required_copy_backs_are_preserved()</td><td class="file-ref">tests/inductor/test_copy_back_elision.py:91</td><td>Preserved copy-back</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">No test targets the clone-in residency pricing credit specifically.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#3137</span>
+  <span class="issue-title">clone() on tensor marked_dynamic leads to constraint violation error</span>
+  <span class="badge badge-weak">Weak</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Score</th><th>Test</th><th>File : Line</th><th>Note</th></tr>
+<tr><td>[6]</td><td class="test-name">test_clone(x)</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5261</td><td>Direct clone test — does not test marked_dynamic tensors</td></tr>
+<tr><td>[3]</td><td class="test-name">test_spyre_tensor_layout_guard()</td><td class="file-ref">tests/tensor/test_tensor_layout.py:495</td><td>"torch.compile recompiles when SpyreTensorLayout changes" — dynamic shapes context</td></tr>
+<tr class="note-row"><td>—</td><td colspan="3">No test exercises clone() on a marked_dynamic tensor specifically.</td></tr>
+</table>
+</div>
+</section>
+
+<section>
+<div class="section-header">
+  <span class="issue-num">#379 / #1353 / #632 / #680 / #689–723 / #727–729 / #1883 / #1919 / #2017 / #2245 / #1413</span>
+  <span class="issue-title">Remaining Group B issues — same feature area, partial keyword overlap</span>
+  <span class="badge badge-weak">Weak</span>
+</div>
+<div class="matches">
+<table>
+<tr><th>Issue</th><th>Best matching test</th><th>File : Line</th><th>Confidence</th></tr>
+<tr><td>#379 (eager recompile)</td><td class="test-name">test_spyre_tensor_layout_guard()</td><td class="file-ref">tests/tensor/test_tensor_layout.py:495</td><td>Dynamic shapes / recompile context</td></tr>
+<tr><td>#632 (transpose shapes)</td><td class="test-name">test_transpose_zero_extent()</td><td class="file-ref">tests/inductor/test_inductor_transpose_edge.py:57</td><td>Transpose with edge-case shapes</td></tr>
+<tr><td>#689 (contiguous_nonview)</td><td class="test-name">test_unfold_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:6010</td><td>Docstring explicitly notes contiguous fails on view</td></tr>
+<tr><td>#690 / #723 (reshape nonview / semantics)</td><td class="test-name">test_view_reshape_a/b() etc.</td><td class="file-ref">tests/inductor/test_propagate_named_dims.py:346+</td><td>reshape + view semantics</td></tr>
+<tr><td>#691 / #729 / #731 (flatten nonview)</td><td class="test-name">test_flatten_cpu()</td><td class="file-ref">tests/inductor/test_inductor_ops.py:5283</td><td>Direct flatten</td></tr>
+<tr><td>#720 / #721 / #727 (transposes upstream)</td><td class="test-name">test_transpose_creates_view()</td><td class="file-ref">tests/inductor/test_inductor_transpose_edge.py:233</td><td>Transpose view semantics</td></tr>
+<tr><td>#1883 / #1919 (numerical errors)</td><td class="test-name">test_scaled_qk_matmul_attention_scores()</td><td class="file-ref">tests/inductor/test_inductor_normalization_scalars.py:393</td><td>Transpose matmul numerics</td></tr>
+<tr><td>#2017 (getitem view)</td><td class="test-name">test_indexing_after_transpose() <span class="badge badge-skip">SKIP</span></td><td class="file-ref">tests/inductor/test_inductor_transpose_edge.py:170</td><td>Indexing as view op</td></tr>
+<tr><td>#2245 / #1413 (lx_planning cat/flatten)</td><td class="test-name">test_flatten_*_lx_planning (skipped)</td><td class="file-ref">tests/inductor/test_inductor_ops_lx_planning.py</td><td>LX-planning flatten failures</td></tr>
+<tr><td>#1353 (view non-unit fractions)</td><td class="test-name">test_d2h_copy_of_transposed_view()</td><td class="file-ref">tests/test_spyre.py:642</td><td>Non-contiguous view copy</td></tr>
+</table>
+</div>
+</section>
+
+
+
+<div class="group-header">
+  <div class="group-badge gc">C</div>
+  <div class="group-meta">
+    <h2>Group C — No matching tests found</h2>
+    <div class="group-def">After exhaustive search across all 916 test functions and 326 xlsx entries, <strong>no test in the repo exercises the op or failure mode described</strong> — not even a skipped or xfail test. These are genuine gaps in test coverage where new tests need to be written from scratch.</div>
+    <div class="group-note">Action: write new test cases for each of these issues.</div>
+  </div>
+  <div class="group-count"><span class="cnt gc">22</span><div class="cnt-label">issues</div></div>
+</div>
+
+<div class="no-match-grid">
+  <div class="no-match-item"><span class="nm-num">#652</span><span class="nm-title">Enable test_view_as_real<br />(view_as_real op — no test exists)</span></div>
+  <div class="no-match-item"><span class="nm-num">#653</span><span class="nm-title">Enable test_view_tensor_split<br />(tensor_split as view op)</span></div>
+  <div class="no-match-item"><span class="nm-num">#673</span><span class="nm-title">Enable torch.repeat_interleave<br />(no test of any kind)</span></div>
+  <div class="no-match-item"><span class="nm-num">#674</span><span class="nm-title">Enable test_view_tensor_hsplit<br />(hsplit — no test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#675</span><span class="nm-title">Enable test_view_tensor_vsplit<br />(vsplit — no test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#676</span><span class="nm-title">Enable test_view_tensor_dsplit<br />(dsplit — no test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#724 / #725</span><span class="nm-title">test_tensor_split_sections /<br />test_tensor_split_indices</span></div>
+  <div class="no-match-item"><span class="nm-num">#728</span><span class="nm-title">Enable test_atleast<br />(atleast_1d/2d/3d — no test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#694 / #697 / #700</span><span class="nm-title">test_real_imag_view /<br />test_conj_imag_view / test_set_real_imag<br />(complex view ops — no test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#650</span><span class="nm-title">test_view_dtype_upsize_errors<br />(no dtype-upsize view error test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#1375</span><span class="nm-title">Enhance Transpose Test Coverage<br />(meta-issue, no specific test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#1919</span><span class="nm-title">contiguous() incorrect numerical results<br />(no targeted correctness test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#1883</span><span class="nm-title">transpose() incorrect numerical results<br />(no targeted correctness test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#2015</span><span class="nm-title">view ops config segfault<br />(no config-triggered view test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#2017</span><span class="nm-title">__getitem__ basic indexing as view op<br />(no dedicated getitem view test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#3417</span><span class="nm-title">Span-overflow planner: 512 split candidates<br />(no large-tensor span-overflow test)</span></div>
+  <div class="no-match-item"><span class="nm-num">#4254</span><span class="nm-title">view_as_complex causes SIGFPE on compile<br />(no view_as_complex test)</span></div>
+</div>
+
+<footer>
+  <div style="padding-top:12px;font-size:12px;color:#57606a;text-align:center">Made with IBM Bob</div>
+</footer>
+</div>
+</body>
+</html>

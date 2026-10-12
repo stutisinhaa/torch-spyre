@@ -22,7 +22,11 @@ from torch._inductor.fx_passes.reinplace import InplaceableOp, inplaceable_ops
 from torch_spyre.ops.eager import compile_once
 from torch_spyre.ops.fallbacks import warn_fallback
 
+<<<<<<< Updated upstream
 from .constants import FP8_E4M3FN_MAX
+=======
+from .constants import FP8_E4M3_MAX
+>>>>>>> Stashed changes
 from .errors import Unsupported
 from .scratchpad.lx_context_switching import mark_lx_safe
 
@@ -500,6 +504,23 @@ def overwrite_f(
     return result
 
 
+@torch.library.register_kernel("spyre::overwrite_f", ["cpu"])
+def overwrite_f_cpu(
+    input: torch.Tensor,
+    output: torch.Tensor,
+    dims: Sequence[int],
+    offsets: Sequence[int],
+) -> torch.Tensor:
+    # overwrite_f is defined with device_types="spyre" only, so it has no CPU
+    # kernel. The mock device stores tensors physically on CPU, so the compiled
+    # call dispatches to CPU and would fail with "Could not run 'spyre::overwrite_f'
+    # ... from the 'CPU' backend". Mirror the functional body, reusing the CPU
+    # kernel already registered for the in-place spyre::overwrite.
+    result = output.clone()
+    torch.ops.spyre.overwrite(input, result, dims, offsets)
+    return result
+
+
 @overwrite_f.register_fake
 def _(
     input: torch.Tensor,
@@ -843,6 +864,7 @@ def _(input: torch.Tensor) -> torch.Tensor:
     return torch.empty(input.size(), dtype=torch.float8_e4m3fn, device=input.device)
 
 
+<<<<<<< Updated upstream
 # Both quantize_fp8_with_scale and quantize_weight_fp8_with_scale share the same
 # four-step pipeline; the only difference is the final format-conversion kernel:
 #   1. Compute inverse scale: inv_scale = 1 / scale  (reciprocal, hardware sfp unit)
@@ -912,6 +934,11 @@ def _(input: torch.Tensor, scale_ub: float = FP8_E4M3FN_MAX) -> torch.Tensor:
     out_shape = list(input.shape)
     out_shape[-1] = 1
     return torch.empty(out_shape, dtype=input.dtype, device=input.device)
+=======
+@torch.library.register_kernel("spyre::qfp8ch", ["cpu"])
+def qfp8ch_cpu(input: torch.Tensor) -> torch.Tensor:
+    return input.clamp(-FP8_E4M3_MAX, FP8_E4M3_MAX).to(torch.float8_e4m3fn)
+>>>>>>> Stashed changes
 
 
 @torch.library.custom_op(
@@ -945,6 +972,7 @@ def _(input: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
     return torch.empty(input.size(), dtype=torch.float8_e4m3fn, device=input.device)
 
 
+<<<<<<< Updated upstream
 # NOTE: Do NOT add a second @torch.library.custom_op registration for this op.
 # A duplicate with a pass body was introduced in commit 8f2e78ff and silently
 # overwrote this implementation at import time, causing None returns in eager mode.
@@ -977,6 +1005,12 @@ def quantize_weight_fp8_with_scale(
 def _(input: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
     # Output is FP8 with same shape as input
     return torch.empty(input.size(), dtype=torch.float8_e4m3fn, device=input.device)
+=======
+@torch.library.register_kernel("spyre::quantize_fp8_with_scale", ["cpu"])
+def quantize_fp8_with_scale_cpu(input: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    x_scaled = input * torch.reciprocal(scale)
+    return x_scaled.clamp(-FP8_E4M3_MAX, FP8_E4M3_MAX).to(torch.float8_e4m3fn)
+>>>>>>> Stashed changes
 
 
 @torch.library.custom_op(
@@ -1014,6 +1048,7 @@ def _(input: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
     return torch.empty(input.size(), dtype=torch.float16, device=input.device)
 
 
+<<<<<<< Updated upstream
 @torch.library.custom_op("spyre::scaled_mm", mutates_args=(), device_types="spyre")
 def scaled_mm(
     mat1: torch.Tensor, mat2: torch.Tensor, out_dtype: torch.dtype = None
@@ -1308,3 +1343,8 @@ mark_lx_safe(torch.ops.spyre.causal_mask.default)
 # them to fallback_ops -- _is_cpu_only_fallback (lx_context_switching.py)
 # catches them without help. Marking them here too would be redundant, not
 # wrong; leave them off so this list stays a signal for ops that need it.
+=======
+@torch.library.register_kernel("spyre::dequantize_fp8_with_scale", ["cpu"])
+def dequantize_fp8_with_scale_cpu(input: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    return input.to(torch.float16) * scale
+>>>>>>> Stashed changes

@@ -1,0 +1,385 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gemma 4 — View Ops Per Layer</title>
+<style>
+:root{
+  --bg:#F4F6F7;--panel:#FFF;--sunk:#FAFBFC;--ink:#0D1418;
+  --ink2:#4A5760;--ink3:#8B959B;--rule:#DBE2E5;--rule2:#EDF1F3;
+  --accent:#0F5C72;--accent2:#E3EFF2;--amber:#FFF3CD;--amberdark:#7a4f00;
+  --full:#EDE9FB;--fulldark:#4a2d9c;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:2rem 1.2rem 5rem}
+h1{font-size:1.45rem;margin:0 0 .2rem;font-weight:730;letter-spacing:-.02em}
+h2{font-size:.92rem;margin:2rem 0 .5rem;font-weight:690;letter-spacing:-.01em}
+.kick{font-family:var(--mono);font-size:.62rem;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin:0 0 .5rem;font-weight:600}
+.sub{font-family:var(--mono);font-size:.7rem;color:var(--ink3);margin-top:.1rem}
+p{margin:0 0 .75rem;color:var(--ink2);max-width:88ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:6px;overflow:hidden;margin:.9rem 0}
+.stat{background:var(--panel);padding:.75rem .9rem}
+.stat .n{font-size:1.3rem;font-weight:700;display:block;line-height:1;letter-spacing:-.02em}
+.stat .l{font-size:.67rem;color:var(--ink3);display:block;margin-top:.35rem;line-height:1.3}
+.note{background:var(--accent2);border-left:3px solid var(--accent);padding:.6rem .85rem;border-radius:0 5px 5px 0;margin:.8rem 0;font-size:.82rem;color:#123F4D}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:.6rem}
+@media(max-width:780px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:7px;overflow:hidden}
+.card-head{padding:.65rem 1rem;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.card-head h3{font-size:.88rem;margin:0;font-weight:680}
+.badge{font-family:var(--mono);font-size:.63rem;border-radius:3px;padding:.1rem .38rem;white-space:nowrap}
+.badge-slide{background:var(--accent2);color:var(--accent)}
+.badge-full{background:var(--full);color:var(--fulldark)}
+.badge-cnt{background:#f1f3f5;color:var(--ink3);margin-left:auto}
+.section{padding:.55rem 1rem .2rem;border-bottom:1px solid var(--rule2)}
+.section:last-child{border-bottom:0;padding-bottom:.75rem}
+.section-title{font-size:.65rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin:0 0 .4rem;display:flex;align-items:center;gap:.5rem}
+.vcnt-badge{font-family:var(--mono);font-size:.6rem;background:var(--amber);color:var(--amberdark);border-radius:2px;padding:.05rem .28rem}
+.tbl{border:1px solid var(--rule);border-radius:4px;overflow:hidden;font-size:.72rem}
+table{border-collapse:collapse;width:100%;background:var(--panel)}
+th{font-size:.6rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);background:var(--sunk);padding:.35rem .55rem;text-align:left;border-bottom:1px solid var(--rule)}
+td{padding:.35rem .55rem;border-bottom:1px solid var(--rule2);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+td.op{font-family:var(--mono);font-size:.68rem;white-space:nowrap;font-weight:600;color:#1a3a2a}
+td.sh{font-family:var(--mono);font-size:.64rem;color:var(--ink2);word-break:break-all}
+tr.vrow{background:var(--amber)}
+tr.vrow td.op{color:var(--amberdark)}
+.diff-note{font-family:var(--mono);font-size:.62rem;color:var(--fulldark);background:var(--full);border-radius:3px;padding:.12rem .4rem;display:inline-block;margin-bottom:.4rem}
+.legend{display:flex;gap:1.2rem;flex-wrap:wrap;font-size:.76rem;color:var(--ink2);margin:.5rem 0 1rem}
+.legend span{display:flex;align-items:center;gap:.35rem}
+.dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kick">Torch-Spyre · Gemma 4 · Layer View Op Analysis</p>
+<h1>Gemma-4-26B-A4B-it — View Ops Per Layer</h1>
+<p class="sub">One sliding-attention layer (layers 0–4, 6–10, …) vs one full-attention layer (layers 5, 11, 17, 23, 29)</p>
+
+<div class="stats">
+  <div class="stat"><span class="n">25</span><span class="l">sliding-attention layers</span></div>
+  <div class="stat"><span class="n">5</span><span class="l">full-attention layers</span></div>
+  <div class="stat"><span class="n">69</span><span class="l">view ops / sliding layer</span></div>
+  <div class="stat"><span class="n">66</span><span class="l">view ops / full-attn layer</span></div>
+</div>
+
+<div class="note">
+  <b>Layer structure:</b> each of the 30 text decoder layers contains
+  <b>self-attention</b> (Q/K/V projections + RoPE + GQA + output proj) +
+  <b>dense MLP</b> (gate/up/down proj) + <b>MoE block</b> (router + 128 experts).
+  Sliding layers use head_dim=256, 8 KV heads (GQA 2×). Full-attention layers use head_dim=512, 2 KV heads (GQA 8×).
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:#FFF3CD;border:1px solid #e8a800"></span> view / layout op</span>
+  <span><span class="dot" style="background:#EDE9FB;border:1px solid #9b8ec4"></span> differs between sliding and full-attention</span>
+</div>
+
+<div class="grid2">
+
+
+<div>
+  <div class="card">
+    <div class="card-head">
+      <h3>Sliding Attention Layer (e.g. layer 0)</h3>
+      <span class="badge badge-slide">sliding_attention</span>
+      <span class="badge badge-cnt">head_dim=256 · 8 KV heads · GQA 2×</span>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn <span class="vcnt-badge">42 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Gemma4TextAttention</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,4096] bf16 → [1,32,16,256]</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2</td><td class="sh">[1,32,256] bf16, dim=2</td><td class="sh">[1,32,1,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.slice ×2</td><td class="sh">[1,32,16,256] bf16, dim=3, 0:128 / 128:</td><td class="sh">[1,32,16,128] bf16</td></tr>
+<tr><td class="op">aten.neg</td><td class="sh">[1,32,16,128] bf16</td><td class="sh">[1,32,16,128] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat</td><td class="sh">[-sin, cos] dim=-1</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr><td class="op">aten.mul + add (RoPE)</td><td class="sh">[1,32,16,256] ×2</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose</td><td class="sh">[1,32,16,256] bf16, dim 1↔2</td><td class="sh">[1,16,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view ×2</td><td class="sh">[1,32,2048] bf16 → [1,32,8,256]</td><td class="sh">[1,32,8,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2</td><td class="sh">[1,32,256] bf16, dim=2</td><td class="sh">[1,32,1,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.slice ×4</td><td class="sh">[1,32,8,256] bf16, dim=3, 0:128 / 128:</td><td class="sh">[1,32,8,128] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat ×2</td><td class="sh">[-sin,cos] for K, dim=-1</td><td class="sh">[1,32,8,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose ×2</td><td class="sh">[1,32,8,256] bf16, dim 1↔2</td><td class="sh">[1,8,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat ×2 (KV cache)</td><td class="sh">[[0], [1,8,32,256]], dim=-2</td><td class="sh">[1,8,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.slice ×2 (slide win)</td><td class="sh">[1,8,32,256] dim=2, -1023:</td><td class="sh">[1,8,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2 (GQA)</td><td class="sh">[1,8,32,256] bf16, dim=2</td><td class="sh">[1,8,1,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand ×2 (GQA 2×)</td><td class="sh">[1,8,1,32,256] → [1,8,2,32,256]</td><td class="sh">[1,8,2,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.clone ×2 (GQA mat)</td><td class="sh">[1,8,2,32,256] bf16</td><td class="sh">[1,8,2,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view ×2</td><td class="sh">[1,8,2,32,256] → [1,16,32,256]</td><td class="sh">[1,16,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose (K^T)</td><td class="sh">[1,16,32,256] dim 2↔3</td><td class="sh">[1,16,256,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (Q bmm)</td><td class="sh">[1,16,32,256] → [16,32,256]</td><td class="sh">[16,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (K bmm)</td><td class="sh">[1,16,256,32] → [16,256,32]</td><td class="sh">[16,256,32] bf16</td></tr>
+<tr><td class="op">aten.bmm (QK^T)</td><td class="sh">[16,32,256] × [16,256,32]</td><td class="sh">[16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[16,32,32] → [1,16,32,32]</td><td class="sh">[1,16,32,32] bf16</td></tr>
+<tr><td class="op">aten.mul + add + softmax</td><td class="sh">scale, mask, softmax</td><td class="sh">[1,16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (A bmm)</td><td class="sh">[1,16,32,32] → [16,32,32]</td><td class="sh">[16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (V bmm)</td><td class="sh">[1,16,32,256] → [16,32,256]</td><td class="sh">[16,32,256] bf16</td></tr>
+<tr><td class="op">aten.bmm (AV)</td><td class="sh">[16,32,32] × [16,32,256]</td><td class="sh">[16,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[16,32,256] → [1,16,32,256]</td><td class="sh">[1,16,32,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose</td><td class="sh">[1,16,32,256] dim 1↔2</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.clone (contiguous)</td><td class="sh">[1,32,16,256] bf16</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (reassemble)</td><td class="sh">[1,32,16,256] → [1,32,4096]</td><td class="sh">[1,32,4096] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.q_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [4096,2816]</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[4096,2816] bf16</td><td class="sh">[2816,4096] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,4096]</td><td class="sh">[32,4096] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,4096] → [1,32,4096]</td><td class="sh">[1,32,4096] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.k_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [2048,2816]</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[2048,2816] bf16</td><td class="sh">[2816,2048] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,2048]</td><td class="sh">[32,2048] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,2048] → [1,32,2048]</td><td class="sh">[1,32,2048] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.v_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [2048,2816]</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[2048,2816] bf16</td><td class="sh">[2816,2048] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,2048]</td><td class="sh">[32,2048] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,2048] → [1,32,2048]</td><td class="sh">[1,32,2048] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.o_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [2816,4096]</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[2816,4096] bf16</td><td class="sh">[4096,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,4096] → [32,4096]</td><td class="sh">[32,4096] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,4096] × [4096,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,2816] → [1,32,2816]</td><td class="sh">[1,32,2816] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">layer (residual + MoE reshape) <span class="vcnt-badge">2 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Gemma4TextDecoderLayer</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr><td class="op">aten.add (residual)</td><td class="sh">[1,32,2816] ×2</td><td class="sh">[1,32,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (flatten→MoE)</td><td class="sh">[1,32,2816] → [-1,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (unflatten)</td><td class="sh">[32,2816] → [1,32,2816]</td><td class="sh">[1,32,2816] bf16</td></tr>
+<tr><td class="op">aten.add ×2 (residuals)</td><td class="sh">[1,32,2816] ×2</td><td class="sh">[1,32,2816] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">mlp.gate_proj / up_proj / down_proj <span class="vcnt-badge">3 view ops each</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t (gate/up)</td><td class="sh">[2112,2816] bf16</td><td class="sh">[2816,2112] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (gate/up)</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm (gate/up)</td><td class="sh">[32,2816] × [2816,2112]</td><td class="sh">[32,2112] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view (gate/up)</td><td class="sh">[32,2112] → [1,32,2112]</td><td class="sh">[1,32,2112] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.t (down)</td><td class="sh">[2816,2112] bf16</td><td class="sh">[2112,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (down)</td><td class="sh">[1,32,2112] → [32,2112]</td><td class="sh">[32,2112] bf16</td></tr>
+<tr><td class="op">aten.mm (down)</td><td class="sh">[32,2112] × [2112,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view (down)</td><td class="sh">[32,2816] → [1,32,2816]</td><td class="sh">[1,32,2816] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">router.proj <span class="vcnt-badge">1 view op</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [128,2816]</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[128,2816] bf16</td><td class="sh">[2816,128] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,128]</td><td class="sh">[32,128] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">experts (Gemma4TextExperts) <span class="vcnt-badge">8 view ops</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.view ×2 (flatten dispatch)</td><td class="sh">[32,8] float32 → [-1]</td><td class="sh">[256] float32 / int64</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze (score mask)</td><td class="sh">[256] bool → dim=-1</td><td class="sh">[256,1] bool</td></tr>
+<tr class="vrow"><td class="op">aten.transpose (expert W_down)</td><td class="sh">[128,1408,2816] → [-2,-1]</td><td class="sh">[128,2816,1408] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.split (gate/up split)</td><td class="sh">[256,1408] → size=704, dim=-1</td><td class="sh">[256,704] ×2 bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose (W_down^T)</td><td class="sh">[128,2816,704] → [-2,-1]</td><td class="sh">[128,704,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze (weight scale)</td><td class="sh">[256] float32 → dim=-1</td><td class="sh">[256,1] float32</td></tr>
+<tr class="vrow"><td class="op">aten.view (reshape output)</td><td class="sh">[256,2816] float32 → [32,8,2816]</td><td class="sh">[32,8,2816] float32</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+  </div>
+</div>
+
+
+<div>
+  <div class="card">
+    <div class="card-head">
+      <h3>Full Attention Layer (layers 5, 11, 17, 23, 29)</h3>
+      <span class="badge badge-full">full_attention</span>
+      <span class="badge badge-cnt">head_dim=512 · 2 KV heads · GQA 8×</span>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn <span class="vcnt-badge">39 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Gemma4TextAttention</span></div>
+      <div class="diff-note">⬡ differs from sliding: head_dim 256→512, KV heads 8→2, GQA 2×→8×, no sliding-window slice, partial RoPE (25% of head_dim)</div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,8192] bf16 → [1,32,16,512]</td><td class="sh">[1,32,16,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2</td><td class="sh">[1,32,512] bf16, dim=2</td><td class="sh">[1,32,1,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.slice ×2 (partial RoPE)</td><td class="sh">[1,32,16,512] dim=3, 0:256 / 256:</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr><td class="op">aten.neg</td><td class="sh">[1,32,16,256] bf16</td><td class="sh">[1,32,16,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat</td><td class="sh">[-sin, cos] dim=-1</td><td class="sh">[1,32,16,512] bf16</td></tr>
+<tr><td class="op">aten.mul + add (RoPE)</td><td class="sh">[1,32,16,512] ×2</td><td class="sh">[1,32,16,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose</td><td class="sh">[1,32,16,512] dim 1↔2</td><td class="sh">[1,16,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view ×2</td><td class="sh">[1,32,1024] bf16 → [1,32,2,512]</td><td class="sh">[1,32,2,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2</td><td class="sh">[1,32,512] bf16, dim=2</td><td class="sh">[1,32,1,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.slice ×4 (partial RoPE K)</td><td class="sh">[1,32,2,512] dim=3, 0:256 / 256:</td><td class="sh">[1,32,2,256] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat ×2</td><td class="sh">[-sin,cos] for K, dim=-1</td><td class="sh">[1,32,2,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose ×2</td><td class="sh">[1,32,2,512] dim 1↔2</td><td class="sh">[1,2,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.cat ×2 (KV cache)</td><td class="sh">[[0], [1,2,32,512]] dim=-2</td><td class="sh">[1,2,32,512] bf16</td></tr>
+<tr style="background:#f8f0ff"><td class="op" style="color:#4a2d9c">no sliding-window slice</td><td class="sh" colspan="2" style="color:#7c5cd8">full attention — entire sequence visible</td></tr>
+<tr class="vrow"><td class="op">aten.unsqueeze ×2 (GQA)</td><td class="sh">[1,2,32,512] bf16, dim=2</td><td class="sh">[1,2,1,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand ×2 (GQA 8×)</td><td class="sh">[1,2,1,32,512] → [1,2,8,32,512]</td><td class="sh">[1,2,8,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.clone ×2 (GQA mat)</td><td class="sh">[1,2,8,32,512] bf16</td><td class="sh">[1,2,8,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view ×2</td><td class="sh">[1,2,8,32,512] → [1,16,32,512]</td><td class="sh">[1,16,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose (K^T)</td><td class="sh">[1,16,32,512] dim 2↔3</td><td class="sh">[1,16,512,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (Q bmm)</td><td class="sh">[1,16,32,512] → [16,32,512]</td><td class="sh">[16,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (K bmm)</td><td class="sh">[1,16,512,32] → [16,512,32]</td><td class="sh">[16,512,32] bf16</td></tr>
+<tr><td class="op">aten.bmm (QK^T)</td><td class="sh">[16,32,512] × [16,512,32]</td><td class="sh">[16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[16,32,32] → [1,16,32,32]</td><td class="sh">[1,16,32,32] bf16</td></tr>
+<tr><td class="op">aten.mul + add + softmax</td><td class="sh">scale, mask, softmax</td><td class="sh">[1,16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (A bmm)</td><td class="sh">[1,16,32,32] → [16,32,32]</td><td class="sh">[16,32,32] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.expand + view ×2 (V bmm)</td><td class="sh">[1,16,32,512] → [16,32,512]</td><td class="sh">[16,32,512] bf16</td></tr>
+<tr><td class="op">aten.bmm (AV)</td><td class="sh">[16,32,32] × [16,32,512]</td><td class="sh">[16,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[16,32,512] → [1,16,32,512]</td><td class="sh">[1,16,32,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.transpose</td><td class="sh">[1,16,32,512] dim 1↔2</td><td class="sh">[1,32,16,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.clone (contiguous)</td><td class="sh">[1,32,16,512] bf16</td><td class="sh">[1,32,16,512] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view (reassemble)</td><td class="sh">[1,32,16,512] → [1,32,8192]</td><td class="sh">[1,32,8192] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.q_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [8192,2816]  ← larger</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[8192,2816] bf16</td><td class="sh">[2816,8192] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,8192]</td><td class="sh">[32,8192] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,8192] → [1,32,8192]</td><td class="sh">[1,32,8192] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.k_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [1024,2816]  ← smaller (2 KV heads)</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[1024,2816] bf16</td><td class="sh">[2816,1024] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,2816] → [32,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,2816] × [2816,1024]</td><td class="sh">[32,1024] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,1024] → [1,32,1024]</td><td class="sh">[1,32,1024] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.v_proj <span style="font-size:.62rem;color:var(--fulldark);font-weight:400;text-transform:none;letter-spacing:0">— same as k_proj (tied weights)</span></div>
+      <p style="font-size:.75rem;color:var(--ink3);margin:.2rem 0 .1rem">Same as k_proj — [1024,2816] weight, output [1,32,1024].</p>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">self_attn.o_proj <span class="vcnt-badge">3 view ops</span> <span style="font-size:.62rem;color:var(--ink3);font-weight:400;text-transform:none;letter-spacing:0">Linear  [2816,8192]  ← larger</span></div>
+      <div class="tbl"><table>
+        <thead><tr><th>Op</th><th>Input shape</th><th>Output shape</th></tr></thead>
+        <tbody>
+<tr class="vrow"><td class="op">aten.t</td><td class="sh">[2816,8192] bf16</td><td class="sh">[8192,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten.view</td><td class="sh">[1,32,8192] → [32,8192]</td><td class="sh">[32,8192] bf16</td></tr>
+<tr><td class="op">aten.mm</td><td class="sh">[32,8192] × [8192,2816]</td><td class="sh">[32,2816] bf16</td></tr>
+<tr class="vrow"><td class="op">aten._unsafe_view</td><td class="sh">[32,2816] → [1,32,2816]</td><td class="sh">[1,32,2816] bf16</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-title">layer, mlp, router, experts</div>
+      <p style="font-size:.75rem;color:var(--ink3);margin:.2rem 0 .1rem">Identical to sliding-attention layer — same MLP sizes (2112 intermediate), same MoE structure (128 experts, top-8, moe_intermediate_size=704).</p>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<h2>Summary by op type</h2>
+<div class="tbl" style="margin-top:.4rem"><table>
+  <thead><tr><th>ATen op</th><th>Sliding count</th><th>Full-attn count</th><th>Source / reason</th></tr></thead>
+  <tbody>
+<tr><td class="op">aten.t</td><td class="sh">5</td><td class="sh">4</td><td class="sh">Linear weight transpose (q/k/v/o/router for sliding; q/k/o/router for full — v tied to k)</td></tr>
+<tr><td class="op">aten.view</td><td class="sh">~18</td><td class="sh">~16</td><td class="sh">Linear batch reshape [1,S,H]↔[S,H]; attention head split/merge; MoE flatten/unflatten</td></tr>
+<tr><td class="op">aten._unsafe_view</td><td class="sh">~8</td><td class="sh">~8</td><td class="sh">Linear output reshape [S,out]→[1,S,out]; GQA expand reshape [B,H_kv,r,S,D]→[B,H,S,D]</td></tr>
+<tr><td class="op">aten.transpose</td><td class="sh">~7</td><td class="sh">~7</td><td class="sh">Q/K/V head reorder [B,S,H,D]→[B,H,S,D]; K^T for bmm; attn output [B,H,S,D]→[B,S,H,D]; expert weights</td></tr>
+<tr><td class="op">aten.expand</td><td class="sh">~8</td><td class="sh">~8</td><td class="sh">GQA: stride-0 broadcast KV heads; bmm batch dim broadcast</td></tr>
+<tr><td class="op">aten.clone</td><td class="sh">3</td><td class="sh">3</td><td class="sh">Materialise GQA expand (must be contiguous for bmm); contiguous after attn transpose</td></tr>
+<tr><td class="op">aten.slice</td><td class="sh">6</td><td class="sh">4</td><td class="sh">RoPE half-split (dim=-1, 0:half / half:); sliding window KV crop (sliding only)</td></tr>
+<tr><td class="op">aten.cat</td><td class="sh">5</td><td class="sh">5</td><td class="sh">RoPE [-sin,cos] concat for Q and K; KV-cache append (empty cat prefill)</td></tr>
+<tr><td class="op">aten.unsqueeze</td><td class="sh">6</td><td class="sh">6</td><td class="sh">RMSNorm scale broadcast; GQA dim insert; MoE dispatch mask/score</td></tr>
+<tr><td class="op">aten.split</td><td class="sh">1</td><td class="sh">1</td><td class="sh">MoE gate/up projection split (moe_intermediate_size=704)</td></tr>
+  </tbody>
+</table></div>
+
+<p style="margin-top:1.5rem;font-size:.75rem;border-top:1px solid var(--rule);padding-top:.75rem;color:var(--ink3)">Made with IBM Bob</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,536 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Tensor Layout Propagation — View on Pointwise / Reduction</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+    background: #fff;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+  }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 32px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+  h3 { font-size: 13px; font-weight: 700; margin: 18px 0 6px; color: #1f2328; }
+  p  { margin-bottom: 10px; }
+  code {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+  }
+  pre {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 12px 14px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin-bottom: 14px;
+  }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 28px; }
+  .box {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    background: #f7f8fa;
+  }
+  .box-accent { border-left: 3px solid #3b82d4; }
+  .box-purple { border-left: 3px solid #7c5cd8; }
+  .box-warn   { border-left: 3px solid #d97706; background: #fffbeb; }
+  .label {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-bottom: 6px;
+  }
+  .label-blue   { background: #dbeafe; color: #1d4ed8; }
+  .label-purple { background: #ede9fe; color: #5b21b6; }
+  .label-green  { background: #d1fae5; color: #065f46; }
+  .label-orange { background: #fef3c7; color: #92400e; }
+  .label-gray   { background: #f3f4f6; color: #374151; }
+
+  /* op graph */
+  .op-graph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 18px 0;
+  }
+  .op-node {
+    width: 220px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 8px 14px;
+    text-align: center;
+    font-size: 13px;
+    background: #fff;
+  }
+  .op-node-highlight { border-color: #3b82d4; background: #eff6ff; }
+  .op-node-purple    { border-color: #7c5cd8; background: #f5f3ff; }
+  .op-node-input     { border-color: #d1d5db; background: #f9fafb; color: #57606a; }
+  .arrow {
+    font-size: 18px;
+    color: #9ca3af;
+    line-height: 1.2;
+  }
+  .arrow-label {
+    font-size: 11px;
+    color: #57606a;
+    margin: -2px 0 -2px;
+    font-style: italic;
+  }
+
+  /* layout diagram */
+  .stick-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+    flex-wrap: wrap;
+  }
+  .dim-label { font-size: 11px; color: #57606a; width: 36px; text-align: right; flex-shrink: 0; }
+  .stick-cells { display: flex; gap: 2px; flex-wrap: wrap; }
+  .cell {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 2px;
+    background: #e5e7eb;
+  }
+  .cell-stick { background: #93c5fd; border-color: #3b82d4; }
+  .cell-stick-red { background: #fca5a5; border-color: #ef4444; }
+  .cell-reduced { background: #d1fae5; border-color: #059669; }
+  .cell-pad { background: #f9fafb; border-color: #e5e7eb; opacity: .5; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  th { background: #f7f8fa; text-align: left; padding: 6px 10px; border: 1px solid #e5e7eb; font-weight: 600; }
+  td { padding: 6px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .section-sep { height: 1px; background: #e5e7eb; margin: 28px 0; }
+  .muted { color: #57606a; font-size: 12px; }
+  footer { margin-top: 48px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 11px; color: #9ca3af; }
+
+  .step { display: flex; gap: 10px; margin-bottom: 12px; }
+  .step-num {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-num-purple { background: #7c5cd8; }
+  .step-body { flex: 1; }
+</style>
+</head>
+<body>
+
+<h1>Tensor Layout Propagation: View on Pointwise / Reduction</h1>
+<p class="subtitle">How <code>SpyreTensorLayout</code> (the stick dimension) is computed in <code>_single_arg_op_layout()</code> when a view sits on top of an op.</p>
+
+
+<h2>Background: What is a SpyreTensorLayout?</h2>
+<p>
+  Spyre hardware stores tensors in a <strong>tiled stick layout</strong>. The innermost device
+  dimension — called the <em>stick</em> — holds a fixed number of elements in a contiguous
+  hardware register: <strong>64 elements</strong> for fp16, <strong>32 elements</strong> for fp32.
+  Every other dimension forms outer tiles over those sticks.
+</p>
+<div class="box box-accent">
+  <span class="label label-blue">SpyreTensorLayout fields</span><br />
+  <code>device_size</code> — concrete size of each device dimension<br />
+  <code>stride_map</code> — stride of each device dimension in elements<br />
+  <code>dim_order</code> — permutation placing the stick dimension last<br />
+  <code>dtype</code> — device dtype (governs stick width)<br />
+  <br />
+  The <strong>stick dimension</strong> is always the <em>last</em> in <code>dim_order</code>.
+  Changing which logical tensor dimension becomes the stick is the entire
+  subject of layout propagation.
+</div>
+
+
+<h2>The Op Graph Structure</h2>
+<p>
+  Inductor fuses a <code>view</code> (reshape/squeeze/unsqueeze/slice) into the same
+  <code>ComputedBuffer</code> as the following op. The <strong>fused</strong> node's
+  <code>MemoryDep</code> carries the view's index expression, so a view is <em>invisible</em>
+  as a separate node — it lives in the index formula of the read dependency.
+</p>
+
+<div style="display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin:18px 0">
+  <div>
+    <p style="text-align:center;font-size:12px;color:#57606a;margin-bottom:8px">View + Pointwise</p>
+    <div class="op-graph">
+      <div class="op-node op-node-input">input <code>[4, 4, 16]</code> fp16</div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">fused view index</div>
+      <div class="arrow">↓</div>
+      <div class="op-node op-node-highlight">ComputedBuffer (Pointwise)<br /><code>relu(view(x, [16,16]))</code><br />output <code>[16, 16]</code></div>
+    </div>
+  </div>
+  <div>
+    <p style="text-align:center;font-size:12px;color:#57606a;margin-bottom:8px">View + Reduction</p>
+    <div class="op-graph">
+      <div class="op-node op-node-input">input <code>[4, 4, 64]</code> fp16</div>
+      <div class="arrow">↓</div>
+      <div class="arrow-label">fused view index</div>
+      <div class="arrow">↓</div>
+      <div class="op-node op-node-purple">ComputedBuffer (Reduction)<br /><code>sum(view(x,[16,64]), dim=1)</code><br />output <code>[16]</code></div>
+    </div>
+  </div>
+</div>
+
+<p>
+  Layout propagation calls <code>_single_arg_op_layout(op, output, output_dep, dep, in_layout, stl)</code>
+  where <code>dep</code> is the read <code>MemoryDep</code> (whose <code>.index</code> encodes
+  the view) and <code>stl</code> is the candidate <code>SpyreTensorLayout</code> for the <em>input</em>.
+</p>
+
+
+<h2>Step 0: Computing Coordinates</h2>
+<p>
+  Two coordinate systems are computed by <code>compute_coordinates()</code> in <code>views.py</code>:
+</p>
+<table>
+  <tr><th>Function</th><th>Input to the algorithm</th><th>Output</th></tr>
+  <tr>
+    <td><code>host_coordinates(layout, dep)</code></td>
+    <td>Host <code>FixedLayout</code> strides + dep index</td>
+    <td>Per-dimension symbolic expressions in the <em>host</em> (logical) space</td>
+  </tr>
+  <tr>
+    <td><code>device_coordinates(stl, dep)</code></td>
+    <td>Device <code>SpyreTensorLayout</code> strides + dep index</td>
+    <td>Per-device-dimension expressions; <strong>last entry is the stick expression</strong></td>
+  </tr>
+</table>
+<p>
+  The view's index expression (e.g. <code>ModularIndexing</code> terms from a reshape)
+  is already baked into <code>dep.index</code>. Both coordinate functions decode that
+  expression against the respective stride arrays to recover per-dimension terms.
+</p>
+
+<div class="section-sep"></div>
+
+
+<h2>Path A — View on top of Pointwise</h2>
+<p>
+  Entry point: the <code>isinstance(data, Pointwise)</code> branch in <code>_single_arg_op_layout()</code>
+  (lines 264–346 of <code>propagate_layouts.py</code>).
+</p>
+
+<h3>Fast path (no layout change needed)</h3>
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-body">
+    Compute <code>in_coords = host_coordinates(in_layout, dep)</code> and
+    <code>out_coords = host_coordinates(output, output_dep)</code>.
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-body">
+    If all four conditions hold:
+    <pre>in_coords == out_coords          # same per-dim access pattern
+in_layout.size == output.size    # same shape
+dep.index == output_dep.index    # same flat index
+same_device_size(in dtype, out dtype)  # no elem-size change</pre>
+    then the tensors are accessed identically. The device layout is
+    propagated unchanged — only the dtype field is updated.<br />
+    <span class="muted">This fires for an elementwise op with no reshape, e.g. <code>relu(x)</code>.</span>
+  </div>
+</div>
+
+<h3>View path (shape changes)</h3>
+<p>
+  When the fast path fails (a reshape <em>has</em> changed the shape), the algorithm
+  works in device coordinate space:
+</p>
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-body">
+    Compute <code>in_device_coords = device_coordinates(stl, dep)</code>.
+    Extract the input stick expression: <code>stick_expr = in_device_coords[-1]</code>.<br />
+    This is a symbolic expression like <code>Mod(d2, 64)</code> saying "element position
+    inside the stick is the loop variable <code>d2</code> modulo 64".
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-body">
+    Call <code>_output_stl_from_stick_expr(stick_expr, output, output_dep, …)</code>.<br />
+    This checks two things:
+    <ul style="margin:4px 0 4px 18px">
+      <li><strong>Offset-free?</strong> — <code>is_stick_expr_offset_free(stick_expr, 64)</code> must be true.
+          A slice that starts mid-stick would produce <code>Mod(d2,64) + 3</code>, which fails here.</li>
+      <li><strong>Survives reshape?</strong> — <code>matching_dim(out_coords, stick_expr)</code> finds which
+          output dimension the stick expression maps to. If no unique output dim carries this
+          expression, the stick dimension was destroyed by the reshape.</li>
+    </ul>
+    If both pass, that output dimension is made the new stick and the result is returned immediately.
+  </div>
+</div>
+<div class="step">
+  <div class="step-num">5</div>
+  <div class="step-body">
+    <strong>Fallback</strong> — if step 4 returned <code>None</code> (stick lost in reshape, or had offset),
+    call <code>_candidate_output_stls()</code> which scans <em>every non-last output dimension</em>
+    as a candidate stick. Only dimensions whose resulting device stick expression is offset-free
+    are kept. Multiple candidates can survive — each becomes one entry in <code>op.layouts</code>.
+  </div>
+</div>
+
+<h3>Concrete example: <code>relu(x.view(16, 16))</code>, input <code>[4, 4, 16]</code> fp16</h3>
+<div class="box">
+  <p><strong>Input STL:</strong> stick on dim 2 (size 16, fits in 64-elem stick with 48 padding elements)</p>
+  <div class="stick-row">
+    <span class="dim-label">dim 0</span>
+    <div class="stick-cells">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    </div>
+    <span class="muted" style="font-size:11px">size=4, stride=64</span>
+  </div>
+  <div class="stick-row">
+    <span class="dim-label">dim 1</span>
+    <div class="stick-cells">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    </div>
+    <span class="muted" style="font-size:11px">size=4, stride=64</span>
+  </div>
+  <div class="stick-row">
+    <span class="dim-label">dim 2 ★</span>
+    <div class="stick-cells">
+      <div class="cell cell-stick"></div><div class="cell cell-stick"></div>
+      <div class="cell cell-stick"></div><div class="cell cell-stick"></div>
+      <div class="cell cell-stick"></div><div class="cell cell-stick"></div>
+      <div class="cell cell-stick"></div><div class="cell cell-stick"></div>
+      <span style="font-size:11px;color:#3b82d4">×16</span>
+      <div class="cell cell-pad"></div><div class="cell cell-pad"></div>
+      <div class="cell cell-pad"></div><div class="cell cell-pad"></div>
+      <span style="font-size:11px;color:#9ca3af">+48 pad</span>
+    </div>
+    <span class="muted" style="font-size:11px">size=64 (device), stride=1</span>
+  </div>
+
+  <p style="margin-top:10px"><strong>After <code>view([16,16])</code>:</strong></p>
+  <p>
+    <code>dep.index</code> = <code>d0 * 16 + d1</code> (flattened from <code>d0*64 + d1*16 + d2</code>).
+    <code>out_coords</code> = <code>[d0, d1]</code>.
+    Input stick expr = <code>Mod(d2, 64)</code> which involves <code>d2</code>, but the output
+    has no <code>d2</code> — stick dimension is <strong>merged</strong> into dim 1.
+    <code>matching_dim</code> fails → fallback scans dim 0 of the output.
+    dim 0 has size 16, which is divisible by 64? No. dim 1 has size 16, same issue.
+    So the candidate stick becomes the last dim of the output with appropriate padding.
+  </p>
+  <p>
+    <strong>Output STL:</strong> stick on output dim 1, device size <code>[16, 64]</code> (size 16 padded to 64-elem stick).
+  </p>
+</div>
+
+<div class="section-sep"></div>
+
+
+<h2>Path B — View on top of Reduction</h2>
+<p>
+  Entry point: the <code>isinstance(data, Reduction)</code> branch in <code>_single_arg_op_layout()</code>
+  (lines 226–262).
+</p>
+<p>
+  The <strong>key difference</strong> from pointwise: a reduction collapses one or more input
+  dimensions entirely. The collapsed dimension disappears from the output, so the
+  stick may have to migrate.
+</p>
+
+<div class="step">
+  <div class="step-num" style="background:#7c5cd8">1</div>
+  <div class="step-body">
+    Compute <code>x_dev_coords = device_coordinates(stl, dep)</code> and
+    <code>out_coords = host_coordinates(output, output_dep)</code>.
+    Extract <code>x_stick_expr = x_dev_coords[-1]</code>.
+  </div>
+</div>
+<div class="step">
+  <div class="step-num" style="background:#7c5cd8">2</div>
+  <div class="step-body">
+    <strong>Attempt to preserve input layout</strong> — same
+    <code>_output_stl_from_stick_expr(x_stick_expr, …)</code> call as pointwise.
+    If the stick dimension survives the reduction (i.e. it is <em>not</em> the reduced dim)
+    and maps to a unique output dim, this returns immediately.
+  </div>
+</div>
+<div class="step">
+  <div class="step-num" style="background:#7c5cd8">3</div>
+  <div class="step-body">
+    <strong>Fallback scan over input dimensions.</strong>
+    Identify the <em>reduction variable</em>:
+    <pre>reduction_var = dep.index.free_symbols − output_dep.index.free_symbols</pre>
+    This is the loop variable that disappears into the output (e.g. <code>r0</code>).
+    Then for each input dimension <code>in_dim</code>:
+    <ul style="margin:4px 0 4px 18px">
+      <li>Skip if <code>size[in_dim] % 64 ≠ 0</code> (no valid stick alignment).</li>
+      <li>If <code>in_coord[in_dim]</code> carries the <strong>reduction variable</strong>
+          → this dim is <strong>collapsed</strong>, so <code>out_stick_dim = −1</code>
+          (innermost output dim becomes the stick).</li>
+      <li>Otherwise → map to an output dim via <code>matching_dim(out_coords, in_coord[in_dim])</code>.
+          If it maps, that output dim is the candidate stick.</li>
+    </ul>
+    Each surviving candidate produces one <code>SpyreTensorLayout</code> added to <code>op.layouts</code>.
+  </div>
+</div>
+
+<h3>Concrete example: <code>x.view(16, 64).sum(dim=1)</code>, input <code>[4, 4, 64]</code> fp16</h3>
+<div class="box box-purple">
+  <p><strong>Input STL:</strong> stick on dim 2 (size 64, exact fit — no padding)</p>
+  <div class="stick-row">
+    <span class="dim-label">dim 0</span>
+    <div class="stick-cells">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    </div>
+    <span class="muted" style="font-size:11px">size=4</span>
+  </div>
+  <div class="stick-row">
+    <span class="dim-label">dim 1</span>
+    <div class="stick-cells">
+      <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+    </div>
+    <span class="muted" style="font-size:11px">size=4</span>
+  </div>
+  <div class="stick-row">
+    <span class="dim-label">dim 2 ★</span>
+    <div class="stick-cells">
+      <div class="cell cell-reduced"></div><div class="cell cell-reduced"></div>
+      <div class="cell cell-reduced"></div><div class="cell cell-reduced"></div>
+      <div class="cell cell-reduced"></div><div class="cell cell-reduced"></div>
+      <span style="font-size:11px;color:#059669">×64 (reduced)</span>
+    </div>
+    <span class="muted" style="font-size:11px">size=64, stride=1</span>
+  </div>
+  <p style="margin-top:10px">
+    After <code>view([16,64])</code>: the <code>reduction_var</code> = <code>r0</code> (ranges over 64).
+    Input stick expr = <code>Mod(r0, 64)</code>. It carries <code>r0</code>.<br />
+    <code>_output_stl_from_stick_expr</code> computes <code>out_coords</code> for output <code>[16]</code>
+    — the output has no symbol matching <code>r0</code>, so <code>matching_dim</code> returns <code>None</code>. First attempt fails.
+  </p>
+  <p>
+    <strong>Fallback scan:</strong> dim 1 of the input (size 64 ✓) carries <code>r0</code>
+    → <code>out_stick_dim = −1</code> → output STL gets stick on the single output dim (dim 0, size 16).
+  </p>
+  <p>
+    <strong>Output STL:</strong> <code>device_size=[64]</code> (16 padded to 64-elem stick), stick on dim 0.
+  </p>
+</div>
+
+<h3>What happens when the stick survives the reduction</h3>
+<div class="box">
+  Example: <code>x.sum(dim=0)</code> on <code>[8, 64]</code> where stick is on dim 1 (the non-reduced dim).<br />
+  <code>x_stick_expr = Mod(d1, 64)</code>. <code>d1</code> is <em>not</em> the reduction var.
+  <code>_output_stl_from_stick_expr</code> finds output dim 0 carries <code>d1</code>.
+  <strong>Layout preserved:</strong> output STL has stick on dim 0, same device stride.
+</div>
+
+<div class="section-sep"></div>
+
+
+<h2>The Critical Constraint: Offset-Free Sticks</h2>
+<p>
+  Both paths gate every candidate on <code>is_stick_expr_offset_free(expr, elems_per_stick)</code>.
+  A stick expression must be one of:
+</p>
+<table>
+  <tr><th>Form</th><th>Example</th><th>Meaning</th></tr>
+  <tr><td><code>Mod(var, N)</code></td><td><code>Mod(d2, 64)</code></td><td>Standard tiled stick</td></tr>
+  <tr><td><code>var</code> (bare symbol)</td><td><code>d2</code></td><td>Dim smaller than stick width</td></tr>
+  <tr><td><code>0</code></td><td><code>0</code></td><td>Scalar / broadcast</td></tr>
+</table>
+<p>
+  A slice that starts mid-stick produces <code>Mod(d2, 64) + 3</code>. This fails the check
+  and that candidate is discarded. If <em>all</em> candidates are discarded,
+  <code>_single_arg_op_layout</code> returns an empty list, and <code>compute_layouts</code>
+  raises <code>Unsupported</code>.
+</p>
+
+
+<h2>Decision Summary</h2>
+<table>
+  <tr>
+    <th>Scenario</th>
+    <th>Fast path?</th>
+    <th>Stick outcome</th>
+    <th>Code path</th>
+  </tr>
+  <tr>
+    <td>Pointwise, no shape change</td>
+    <td>Yes</td>
+    <td>Propagated unchanged</td>
+    <td>lines 324–335</td>
+  </tr>
+  <tr>
+    <td>Pointwise view, stick dim survives reshape</td>
+    <td>No</td>
+    <td>Mapped to corresponding output dim</td>
+    <td><code>_output_stl_from_stick_expr</code></td>
+  </tr>
+  <tr>
+    <td>Pointwise view, stick dim merged/removed</td>
+    <td>No</td>
+    <td>Scan all output dims; pick first offset-free</td>
+    <td><code>_candidate_output_stls</code></td>
+  </tr>
+  <tr>
+    <td>Reduction, stick on non-reduced dim</td>
+    <td>No</td>
+    <td>Stick maps to surviving output dim</td>
+    <td><code>_output_stl_from_stick_expr</code></td>
+  </tr>
+  <tr>
+    <td>Reduction, stick on the reduced dim</td>
+    <td>No</td>
+    <td>Dim collapses → stick on innermost output dim</td>
+    <td>Fallback scan, <code>out_stick_dim = −1</code></td>
+  </tr>
+  <tr>
+    <td>View starts mid-stick (slice with offset)</td>
+    <td>No</td>
+    <td>Candidate discarded → <code>Unsupported</code></td>
+    <td><code>is_stick_expr_offset_free</code> gate</td>
+  </tr>
+</table>
+
+
+<h2>How to Observe This at Runtime</h2>
+<pre>TORCH_LOGS="spyre.inductor.propagate_layouts:DEBUG" \
+TORCH_COMPILE_DEBUG=1 \
+python your_script.py 2&gt;&amp;1 | grep -E "stick|STL|layout|Mod"</pre>
+<p>
+  The logger is named <code>spyre.inductor.propagate_layouts</code> (created via
+  <code>get_inductor_logger("propagate_layouts")</code> at line 80 of
+  <code>propagate_layouts.py</code>).
+  The existing debug block at line 762 prints device coordinates with indirect-index
+  substitutions. For direct inspection of the view paths you can temporarily add
+  <code>logger.debug(f"stick_expr={stick_expr}, out_stl={out_stl}")</code> just before
+  the return sites at lines 335 and 345.
+</p>
+
+<footer>Made with IBM Bob</footer>
+</body>
+</html>

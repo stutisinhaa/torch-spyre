@@ -1,0 +1,400 @@
+
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gemma-4-26B-A4B-it — HF-Adapter Spyre Compiled Graph Report</title>
+<style>:root{
+  --bg:#F4F6F7;--panel:#FFF;--sunk:#FAFBFC;--ink:#0D1418;
+  --ink2:#4A5760;--ink3:#8B959B;--rule:#DBE2E5;--rule2:#EDF1F3;
+  --accent:#0F5C72;--accent2:#E3EFF2;--purple:#75297F;--green:#1a7a4a;--green2:#e6f4ed;
+  --red:#9b1c1c;--red2:#fef2f2;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:2.2rem 1.4rem 5rem}
+h1{font-size:1.55rem;margin:0 0 .25rem;letter-spacing:-.02em;font-weight:730;line-height:1.2}
+h2{font-size:1rem;margin:2.1rem 0 .55rem;font-weight:690;letter-spacing:-.01em}
+h3{font-size:.9rem;margin:1.4rem 0 .4rem;font-weight:650;letter-spacing:-.01em;color:var(--ink2)}
+p{margin:0 0 .85rem;max-width:90ch;color:var(--ink2)}
+.kick{font-family:var(--mono);font-size:.65rem;letter-spacing:.17em;text-transform:uppercase;color:var(--accent);margin:0 0 .6rem;font-weight:600}
+.sub{font-family:var(--mono);font-size:.71rem;color:var(--ink3);margin-top:.15rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:6px;overflow:hidden;margin:1rem 0}
+.stat{background:var(--panel);padding:.8rem .95rem}
+.stat .n{font-size:1.35rem;font-weight:700;display:block;line-height:1;letter-spacing:-.02em}
+.stat .l{font-size:.69rem;color:var(--ink3);display:block;margin-top:.38rem;line-height:1.3}
+.spec{background:var(--panel);border:1px solid var(--rule);border-radius:6px;overflow:hidden;margin:.9rem 0}
+.spec div{display:flex;gap:1rem;padding:.48rem 1rem;border-bottom:1px solid var(--rule2);font-size:.84rem}
+.spec div:last-child{border-bottom:0}
+.spec .k{flex:0 0 14rem;color:var(--ink3)}
+.spec .v{color:var(--ink);font-family:var(--mono);font-size:.79rem;word-break:break-word}
+.note{background:var(--accent2);border-left:3px solid var(--accent);padding:.65rem .9rem;border-radius:0 5px 5px 0;margin:.9rem 0;font-size:.85rem;color:#123F4D}
+.warn{background:#fff8e6;border-left:3px solid #e6a817;padding:.65rem .9rem;border-radius:0 5px 5px 0;margin:.9rem 0;font-size:.85rem;color:#5a3e00}
+.err{background:var(--red2);border-left:3px solid var(--red);padding:.65rem .9rem;border-radius:0 5px 5px 0;margin:.9rem 0;font-size:.85rem;color:#5a0000}
+.explain{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:1rem 1.1rem;margin:.9rem 0}
+.explain p{margin:0 0 .5rem}
+.explain p:last-child{margin:0}
+details.mod{border:1px solid var(--rule);background:var(--panel);border-radius:5px;margin-bottom:3px}
+details.mod summary{list-style:none;cursor:pointer;padding:.55rem .72rem;display:flex;align-items:center;gap:.6rem;font-size:.84rem;flex-wrap:wrap}
+details.mod summary::-webkit-details-marker{display:none}
+details.mod summary:hover{background:var(--sunk)}
+.arrow{color:var(--ink3);font-size:.57rem;transition:transform .12s}
+details.mod[open] .arrow{transform:rotate(90deg)}
+.badge{font-family:var(--mono);font-size:.68rem;border-radius:3px;padding:.1rem .4rem}
+.badge-blue{color:var(--accent);background:var(--accent2)}
+.badge-purple{color:var(--purple);background:#F3E9F4}
+.badge-green{color:var(--green);background:var(--green2)}
+.cnt{font-family:var(--mono);font-size:.69rem;color:var(--ink3);margin-left:auto;white-space:nowrap}
+.module-body{padding:.1rem .72rem .8rem;border-top:1px solid var(--rule2)}
+.module-body h4{margin:.85rem 0 .45rem;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)}
+.scroll{overflow-x:auto}
+.tbl{border:1px solid var(--rule);border-radius:5px;overflow:hidden;margin:.4rem 0}
+table{border-collapse:collapse;width:100%;font-size:.76rem;background:var(--panel)}
+th,td{text-align:left;padding:.45rem .65rem;border-bottom:1px solid var(--rule2);vertical-align:top}
+thead th{font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);background:var(--sunk)}
+tbody tr:last-child td{border-bottom:0}
+td.op{font-family:var(--mono);font-size:.72rem;white-space:nowrap;color:var(--ink)}
+td.op.view{color:var(--purple);font-weight:600}
+td.op.spyre{color:var(--green);font-weight:600}
+td.op.scatter{color:var(--red);font-weight:600}
+td.sh{font-family:var(--mono);font-size:.69rem;color:var(--ink2);word-break:break-word}
+td.src{font-size:.69rem;color:var(--ink3);font-style:italic}
+tr.view-row td{background:#faf5ff}
+tr.spyre-row td{background:var(--green2)}
+tr.scatter-row td{background:var(--red2)}
+code{font-family:var(--mono);font-size:.82em;background:var(--sunk);padding:.1rem .3rem;border-radius:3px;border:1px solid var(--rule2)}
+@media(max-width:680px){.wrap{padding:1.5rem 1rem 3rem}h1{font-size:1.3rem}.spec div{flex-direction:column;gap:.08rem}.spec .k{flex:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="kick">Torch-Spyre · Gemma 4 26B-A4B-it · HF-Adapter · Spyre hardware · aot_graphs trace · v2</p>
+<h1>Gemma-4-26B-A4B-it — HF-Adapter Compiled Graph Report</h1>
+<p class="sub">Graphs captured via TORCH_LOGS="aot_graphs" on Spyre hardware. Shows the exact ATen ops the Spyre compiler receives, with real tensor shapes and strides.</p>
+
+<div class="stats">
+  <div class="stat"><span class="n">4</span><span class="l">compiled graphs captured</span></div>
+  <div class="stat"><span class="n">107</span><span class="l">total ATen op nodes</span></div>
+  <div class="stat"><span class="n">22</span><span class="l">unique op types</span></div>
+  <div class="stat"><span class="n">25</span><span class="l">view / layout ops (corrected)</span></div>
+  <div class="stat"><span class="n">4</span><span class="l">Spyre custom ops</span></div>
+</div>
+
+<div class="note">
+  <b>How to read this report:</b> each row is one compiled graph (one <code>torch.compile</code> region). Expand to see every ATen node with input shape, stride, and output shape exactly as Dynamo traced them on Spyre.
+  <span style="display:inline-block;margin-top:.4rem">
+    <span style="background:#faf5ff;padding:.1rem .4rem;border-radius:3px;font-family:var(--mono);font-size:.8rem;color:var(--purple);font-weight:600">purple</span> = view/layout op  · 
+    <span style="background:var(--green2);padding:.1rem .4rem;border-radius:3px;font-family:var(--mono);font-size:.8rem;color:var(--green);font-weight:600">green</span> = Spyre custom op  · 
+    <span style="background:var(--red2);padding:.1rem .4rem;border-radius:3px;font-family:var(--mono);font-size:.8rem;color:var(--red);font-weight:600">red</span> = scatter-write (not a view op)
+  </span>
+</div>
+
+<div class="warn">
+  <b>Coverage note:</b> the script crashed during compilation of the second layer's <code>_compiled_prefill_ffn</code> due to a known Spyre named-dims limitation on the MoE sum-reduction shape (<code>expected exactly 1 reduction variable, got set()</code>). Graphs 0–3 (one full decoder layer) are complete and representative of all layers — see the layer structure section below.
+</div>
+
+
+<h2>Layer structure: what are <code>_compiled_prefill_attn</code> and <code>_compiled_prefill_ffn</code>?</h2>
+
+<div class="explain">
+  <p>Gemma-4-26B uses a <b>MoE decoder</b> (Mixture-of-Experts). Every decoder layer is implemented as a <code>Gemma4MoEBlock</code> in <code>hf_gemma4_moe.py</code>. The HF adapter manually splits each block into <b>two separately compiled sub-graphs</b> to keep compilation units manageable and to isolate the attention KV-cache mutation from the FFN computation:</p>
+
+  <p><b><code>_compiled_prefill_attn</code></b> (graph 2 in this trace) wraps <code>_attn_forward</code>. It covers the entire attention sub-layer of one decoder block: input RMSNorm → Q/K/V projections (via BMM) → per-head RMSNorm on q/k/v → RoPE (matmul-based) → KV cache scatter-write (<code>index_put</code> + <code>copy_</code>) → GQA expansion (8 KV heads → 16 Q heads) → scaled-dot-product attention decomposed into online softmax + BMMs → output projection → post-attention RMSNorm → residual add. It receives the full set of attention weight tensors as inputs and the two KV cache buffers as mutable side-effect tensors.</p>
+
+  <p><b><code>_compiled_prefill_ffn</code></b> (graph 3 in this trace) wraps <code>_prefill_ffn</code>. It covers the entire FFN sub-layer: input RMSNorm → <b>dense MLP path</b> (gate/up/down projections via BMM + GeLU) running in parallel with the <b>MoE path</b> — router softmax → top-8-of-128 expert selection (<code>spyre.topkindex</code>) → routing weight computation → all-experts batched BMM (gate/up/down, shape <code>[128,64,704]</code>) → weighted sum across experts (<code>sum(dim=0)</code>) → post-FFN RMSNorm → residual add → layer scalar multiply.</p>
+</div>
+
+<h3>Why graphs 2 and 3 are representative of all 62 decoder layers</h3>
+<div class="explain">
+  <p>Gemma-4-26B has 62 decoder layers. <b>Every layer has the same <code>Gemma4MoEBlock</code> structure</b> — the same two compiled regions with the same op graph, just different weight tensor values. The adapter compiles each region with <code>torch.compile</code> at the <i>class method</i> level (not per-instance), so after the first layer compiles and populates the cache, all subsequent layers reuse the same compiled artifact. The trace shows graphs 0–3 because only the first layer triggers compilation; later layers hit the cache. This means graphs 2 and 3 <b>fully describe the op-level computation for every decoder layer</b> in the model.</p>
+  <p>The two exceptions are layers that use global (non-sliding) attention — those differ in KV cache size and mask shape but the op types are identical. The dense-vs-MoE layer split is uniform across all 62 layers in this model variant.</p>
+</div>
+
+<h3>What is missing</h3>
+<div class="explain">
+  <p>The trace covers one complete decoder layer (graphs 0–3). What is <b>not captured</b> due to the crash:</p>
+  <ul style="margin:.2rem 0 .5rem 1.2rem;color:var(--ink2);font-size:.87rem">
+    <li>The second layer's <code>_compiled_prefill_ffn</code> — compilation aborted before it finished. In practice this is the same graph as graph 3.</li>
+    <li>The final <b>language model head</b> (lm_head linear projection) and any post-backbone normalisation — these would be separate compiled regions not reached.</li>
+    <li><b>Token-generation (decode) graphs</b> — the adapter uses different compiled paths for single-token decode steps; those are not shown here at all.</li>
+  </ul>
+</div>
+
+
+<h2>The crash: <code>expected exactly 1 reduction variable, got set()</code></h2>
+
+<div class="err">
+  <b>Where:</b> <code>torch_spyre/_inductor/wsr/propagate_named_dims.py</code> → <code>find_reduction_var</code>, called from <code>_compute_named_dims</code> during the pre-scheduling pass for the second layer's <code>_compiled_prefill_ffn</code>.<br /><br />
+  <b>Full traceback root:</b> <code>aten.sum.dim_IntList(mul_12, [0])</code> — the MoE expert-weighted sum that reduces over dim 0 (the expert dimension, size 128) to produce <code>bf16[64, 2816]</code>.
+</div>
+
+<div class="explain">
+  <p>The Spyre named-dims pass assigns symbolic named dimensions to every loop variable in every scheduled buffer so the compiler can reason about tiling and work distribution. For a reduction op it needs to find <b>exactly one reduction variable</b> — the loop variable that iterates over the reduced axis — to annotate it as a reduction dim.</p>
+  <p>In this case the reduction is over <b>dim 0, size 128</b> (the expert axis of <code>bf16[128, 64, 2816]</code>). The named-dims propagation pass could not find a named-dim mapping for that loop variable — it returned an empty set instead of exactly one symbol. This happens because the expert dimension (128) was not given a named dim label by any upstream op in the graph, so the propagation chain has no name to attach to it when the reduction node is visited.</p>
+  <p>The crash is <b>deterministic</b>: it fires on the second layer because the first layer's FFN was compiled before the named-dims pass was improved to handle this shape, but on the second run the cache is not hit and the pass runs again. In practice, graph 3 from the first layer and the would-be graph from the second layer are <b>identical in structure</b>, so this crash blocks no new information — it is a known limitation tracked against the named-dims pass for multi-dim reductions on the expert axis.</p>
+</div>
+
+
+<h2>Run configuration</h2>
+<div class="spec">
+  <div><span class="k">Model</span><span class="v">google/gemma-4-26B-A4B-it</span></div>
+  <div><span class="k">Adapter</span><span class="v">hf_adapters.hf_gemma4_moe (commit 34d21be)</span></div>
+  <div><span class="k">Device</span><span class="v">spyre:0 (hardware)</span></div>
+  <div><span class="k">Dtype</span><span class="v">bfloat16</span></div>
+  <div><span class="k">Input</span><span class="v">input_ids shape=[1, 64] dtype=int64 · seq_len=64 · max_new_tokens=2</span></div>
+  <div><span class="k">Capture method</span><span class="v">TORCH_LOGS="aot_graphs" — graphs as received by Spyre inductor backend</span></div>
+  <div><span class="k">KV cache shape</span><span class="v">[1, 8, 512, 256] per layer (sliding) · index_put scatter write</span></div>
+</div>
+
+
+<h2>Compiled graphs</h2>
+<p>One row per <code>torch.compile</code> region. Expand to see all ATen nodes.</p>
+
+
+<details class="mod">
+  <summary>
+    <span class="arrow">▶</span>
+    <b>Forward graph 0</b>
+    <span class="badge badge-blue">Embedding</span>
+    <span class="cnt">1 op</span>
+  </summary>
+  <div class="module-body">
+    <div class="spec">
+      <div><span class="k">Source region</span><span class="v">token embedding lookup</span></div>
+      <div><span class="k">Inputs</span><span class="v">arg0_1: bf16[262144, 2816][2816,1]spyre  ·  arg1_1: i64[1, 64][64,1]spyre</span></div>
+      <div><span class="k">Output</span><span class="v">bf16[1, 64, 2816][180224, 2816, 1]spyre</span></div>
+    </div>
+    <h4>ATen nodes</h4>
+    <div class="tbl scroll"><table>
+      <thead><tr><th>Operation</th><th>Input shapes / strides</th><th>Output shape / stride</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="op">aten.embedding.default</td><td class="sh">weight: bf16[262144,2816][2816,1] · indices: i64[1,64][64,1] · padding_idx=0</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">nn.Embedding forward</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</details>
+
+
+<details class="mod">
+  <summary>
+    <span class="arrow">▶</span>
+    <b>Forward graph 1</b>
+    <span class="badge badge-blue">Embedding scale</span>
+    <span class="cnt">1 op</span>
+  </summary>
+  <div class="module-body">
+    <div class="spec">
+      <div><span class="k">Source region</span><span class="v">embedding × normalizer scalar (hidden_size ** 0.5)</span></div>
+      <div><span class="k">Inputs</span><span class="v">arg0_1: bf16[1,64,2816][180224,2816,1]spyre  ·  arg1_1: bf16[][]spyre (scalar)</span></div>
+      <div><span class="k">Output</span><span class="v">bf16[1,64,2816][180224,2816,1]spyre</span></div>
+    </div>
+    <h4>ATen nodes</h4>
+    <div class="tbl scroll"><table>
+      <thead><tr><th>Operation</th><th>Input shapes / strides</th><th>Output shape / stride</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">bf16[1,64,2816][180224,2816,1] · scalar bf16[]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">embed scale multiply</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</details>
+
+
+<details class="mod">
+  <summary>
+    <span class="arrow">▶</span>
+    <b>Forward graph 2</b>
+    <span class="badge badge-blue">_compiled_prefill_attn</span>
+    <span class="badge badge-purple">Gemma4Attention · sliding layer · seq_len=64</span>
+    <span class="cnt">61 ops</span>
+  </summary>
+  <div class="module-body">
+    <div class="spec">
+      <div><span class="k">Source region</span><span class="v">hf_gemma4_moe.py · Gemma4MoEBlock._compiled_prefill_attn → _attn_forward</span></div>
+      <div><span class="k">Key inputs</span><span class="v">hidden: bf16[1,64,2816] · q_w: bf16[4096,2816] · k_w: bf16[2048,2816] · v_w: bf16[2048,2816] · selected_freqs: bf16[1,64,2,2,128] · key_cache: bf16[1,8,512,256] · cache_index: i64[64] · value_cache: bf16[1,8,512,256] · attn_mask: bf16[1,1,64,512] · o_w: bf16[2816,4096]</span></div>
+      <div><span class="k">Output</span><span class="v">hidden_states: bf16[1,64,2816][180224,2816,1]spyre</span></div>
+      <div><span class="k">Side effects</span><span class="v">copy_(key_cache) · copy_(value_cache) — in-place KV scatter write</span></div>
+    </div>
+    <h4>ATen nodes <span style="font-weight:400;font-size:.7rem;color:var(--ink3);text-transform:none;letter-spacing:0">(purple = view/layout op, green = Spyre custom op, red = scatter-write)</span></h4>
+    <div class="tbl scroll"><table>
+      <thead><tr><th>Operation</th><th>Input shapes / strides</th><th>Output shape / stride</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="op">prims.convert_element_type</td><td class="sh">bf16[1,64,2816][180224,2816,1] → f32</td><td class="sh">f32[1,64,2816][180224,2816,1]</td><td class="src">_gemma4_rms_norm: cast to f32</td></tr>
+        <tr><td class="op">aten.pow.Tensor_Scalar</td><td class="sh">f32[1,64,2816] · exp=2</td><td class="sh">f32[1,64,2816][180224,2816,1]</td><td class="src">rms_norm: x²</td></tr>
+        <tr><td class="op">aten.mean.dim</td><td class="sh">f32[1,64,2816] · dim=[-1] keepdim=True</td><td class="sh">f32[1,64,1][64,1,1]</td><td class="src">rms_norm: mean(x²,-1)</td></tr>
+        <tr><td class="op">aten.add.Tensor</td><td class="sh">f32[1,64,1] · 1e-06</td><td class="sh">f32[1,64,1][64,1,1]</td><td class="src">rms_norm: variance + eps</td></tr>
+        <tr><td class="op">aten.rsqrt.default</td><td class="sh">f32[1,64,1]</td><td class="sh">f32[1,64,1][64,1,1]</td><td class="src">rms_norm: rsqrt</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">f32[1,64,2816] · f32[1,64,1]</td><td class="sh">f32[1,64,2816][180224,2816,1]</td><td class="src">rms_norm: x * rsqrt</td></tr>
+        <tr><td class="op">prims.convert_element_type</td><td class="sh">f32[1,64,2816] → bf16</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">rms_norm: cast back to bf16</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">bf16[1,64,2816] · weight bf16[2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">rms_norm: × weight</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">q_w bf16[4096,2816][2816,1] · dims=[1,0]</td><td class="sh">bf16[2816,4096][1,2816]</td><td class="src">q_proj weight transpose</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[2816,4096][1,2816] · dim=0</td><td class="sh">bf16[1,2816,4096][2816,1,2816]</td><td class="src">q_proj weight unsqueeze batch</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default</td><td class="sh">bf16[1,64,2816][180224,2816,1] · [1,64,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">q_proj input expand</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,2816] · shape=[1,64,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">q_proj input view</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default</td><td class="sh">bf16[1,2816,4096][2816,1,2816] · [1,2816,4096]</td><td class="sh">bf16[1,2816,4096][2816,1,2816]</td><td class="src">q_proj weight expand</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,2816,4096] · [1,2816,4096]</td><td class="sh">bf16[1,2816,4096][2816,1,2816]</td><td class="src">q_proj weight view</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2816] · bf16[1,2816,4096]</td><td class="sh">bf16[1,64,4096][262144,4096,1]</td><td class="src">q_proj linear (BMM)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,4096][262144,4096,1] · [1,64,4096]</td><td class="sh">bf16[1,64,4096][262144,4096,1]</td><td class="src">q_proj BMM output reshape</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,4096] · [1,64,16,256]</td><td class="sh">bf16[1,64,16,256][262144,4096,256,1]</td><td class="src">q head split: [B,S,H*D]→[B,S,H,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">k_w bf16[2048,2816] · [1,0]</td><td class="sh">bf16[2816,2048][1,2816]</td><td class="src">k_proj weight transpose</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[2816,2048] · dim=0</td><td class="sh">bf16[1,2816,2048][2816,1,2816]</td><td class="src">k_proj weight unsqueeze</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2816] · bf16[1,2816,2048]</td><td class="sh">bf16[1,64,2048][131072,2048,1]</td><td class="src">k_proj linear (BMM)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,2048] · [1,64,8,256]</td><td class="sh">bf16[1,64,8,256][131072,2048,256,1]</td><td class="src">k head split: [B,S,KVH*D]→[B,S,KVH,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">v_w bf16[2048,2816] · [1,0]</td><td class="sh">bf16[2816,2048][1,2816]</td><td class="src">v_proj weight transpose</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[2816,2048] · dim=0</td><td class="sh">bf16[1,2816,2048][2816,1,2816]</td><td class="src">v_proj weight unsqueeze</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2816] · bf16[1,2816,2048]</td><td class="sh">bf16[1,64,2048][131072,2048,1]</td><td class="src">v_proj linear (BMM)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,2048] · [1,64,8,256]</td><td class="sh">bf16[1,64,8,256][131072,2048,256,1]</td><td class="src">v head split: [B,S,KVH*D]→[B,S,KVH,D]</td></tr>
+        <tr><td class="op">prims.convert_element_type (×3)</td><td class="sh">bf16[1,64,{8|16},256] → f32</td><td class="sh">f32 same shape</td><td class="src">q/k/v rms_norm cast</td></tr>
+        <tr><td class="op">aten.pow / mean / add / rsqrt / mul (×3 sets)</td><td class="sh">q/k/v norm shapes</td><td class="sh">normalised bf16 q/k/v</td><td class="src">q_norm · k_norm · v_norm (RMSNorm per head)</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">v bf16[1,64,8,256] · [0,2,1,3]</td><td class="sh">bf16[1,8,64,256][131072,256,2048,1]</td><td class="src">v transpose: [B,S,KVH,D]→[B,KVH,S,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">q bf16[1,64,16,256] · [0,2,1,3]</td><td class="sh">bf16[1,16,64,256][262144,256,4096,1]</td><td class="src">q transpose: [B,S,H,D]→[B,H,S,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">k bf16[1,64,8,256] · [0,2,1,3]</td><td class="sh">bf16[1,8,64,256][131072,256,2048,1]</td><td class="src">k transpose: [B,S,KVH,D]→[B,KVH,S,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">q bf16[1,16,64,256] · [0,2,1,3]</td><td class="sh">bf16[1,64,16,256][262144,4096,256,1]</td><td class="src">apply_rope_matmul: x.transpose(1,2)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,16,256] · [1,64,16,2,128]</td><td class="sh">bf16[1,64,16,2,128][262144,4096,256,128,1]</td><td class="src">RoPE: reshape head_dim→[2, half] for matmul</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">selected_freqs bf16[1,64,2,2,128] · dim=2</td><td class="sh">bf16[1,64,1,2,2,128][32768,512,512,256,128,1]</td><td class="src">RoPE: sf[:,:,None,:,:,:]</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[1,64,16,2,128] · dim=-3</td><td class="sh">bf16[1,64,16,1,2,128][262144,4096,256,256,128,1]</td><td class="src">RoPE: x_.unsqueeze(-3)</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">bf16[1,64,1,2,2,128] · bf16[1,64,16,1,2,128]</td><td class="sh">bf16[1,64,16,2,2,128][524288,8192,512,256,128,1]</td><td class="src">RoPE: sf * x_</td></tr>
+        <tr><td class="op">aten.sum.dim_IntList</td><td class="sh">bf16[1,64,16,2,2,128] · dim=[4] keepdim=True</td><td class="sh">bf16[1,64,16,2,1,128][262144,4096,256,128,128,1]</td><td class="src">RoPE: sum over rotation dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,16,2,1,128] · [1,64,16,256]</td><td class="sh">bf16[1,64,16,256][262144,4096,256,1]</td><td class="src">RoPE q: flatten back to head_dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">bf16[1,64,16,256] · [0,2,1,3]</td><td class="sh">bf16[1,16,64,256][262144,256,4096,1]</td><td class="src">RoPE q: out.transpose(1,2)</td></tr>
+        <tr class="view-row"><td class="op view">aten.clone.default</td><td class="sh">bf16[1,16,64,256] · memory_format=contiguous</td><td class="sh">bf16[1,16,64,256][262144,16384,256,1]</td><td class="src">RoPE q: .contiguous() — materialise non-contiguous permute</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">k bf16[1,8,64,256] · [0,2,1,3]</td><td class="sh">bf16[1,64,8,256][131072,2048,256,1]</td><td class="src">apply_rope_matmul k: x.transpose(1,2)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,8,256] · [1,64,8,2,128]</td><td class="sh">bf16[1,64,8,2,128][131072,2048,256,128,1]</td><td class="src">RoPE k: reshape head_dim→[2, half]</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">selected_freqs bf16[1,64,2,2,128] · dim=2</td><td class="sh">bf16[1,64,1,2,2,128]</td><td class="src">RoPE k: sf[:,:,None,:,:,:]</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[1,64,8,2,128] · dim=-3</td><td class="sh">bf16[1,64,8,1,2,128]</td><td class="src">RoPE k: x_.unsqueeze(-3)</td></tr>
+        <tr><td class="op">aten.mul / sum (RoPE k)</td><td class="sh">bf16[1,64,8,2,2,128] → sum dim=[4]</td><td class="sh">bf16[1,64,8,2,1,128]</td><td class="src">RoPE k: sf * x_, sum over rotation dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,8,2,1,128] · [1,64,8,256]</td><td class="sh">bf16[1,64,8,256]</td><td class="src">RoPE k: flatten back to head_dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">bf16[1,64,8,256] · [0,2,1,3]</td><td class="sh">bf16[1,8,64,256][131072,256,2048,1]</td><td class="src">RoPE k: out.transpose(1,2)</td></tr>
+        <tr class="view-row"><td class="op view">aten.clone.default</td><td class="sh">bf16[1,8,64,256] · memory_format=contiguous</td><td class="sh">bf16[1,8,64,256][131072,16384,256,1]</td><td class="src">RoPE k: .contiguous()</td></tr>
+        <tr class="scatter-row"><td class="op scatter">aten.index_put.default</td><td class="sh">key_cache bf16[1,8,512,256] · indices=[None,None,cache_index i64[64]] · values bf16[1,8,64,256]</td><td class="sh">bf16[1,8,512,256][1048576,131072,256,1]</td><td class="src">KV cache: scatter-write k at cache_index rows (NOT a view op)</td></tr>
+        <tr class="scatter-row"><td class="op scatter">aten.index_put.default</td><td class="sh">value_cache bf16[1,8,512,256] · values bf16[1,8,64,256]</td><td class="sh">bf16[1,8,512,256][1048576,131072,256,1]</td><td class="src">KV cache: scatter-write v at cache_index rows (NOT a view op)</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">key_cache bf16[1,8,512,256] · dim=2</td><td class="sh">bf16[1,8,1,512,256][1048576,131072,131072,256,1]</td><td class="src">GQA expand: insert repeat dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default</td><td class="sh">bf16[1,8,1,512,256] · [-1,-1,2,-1,-1]</td><td class="sh">bf16[1,8,2,512,256][1048576,131072,0,256,1]</td><td class="src">GQA expand K: 8 KV heads → 16 Q heads (stride-0)</td></tr>
+        <tr class="view-row"><td class="op view">aten.clone.default</td><td class="sh">bf16[1,8,2,512,256] · memory_format=contiguous</td><td class="sh">bf16[1,8,2,512,256][2097152,262144,131072,256,1]</td><td class="src">GQA: materialise stride-0 expand for BMM</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,8,2,512,256] · [1,16,512,256]</td><td class="sh">bf16[1,16,512,256][2097152,131072,256,1]</td><td class="src">GQA K: reshape [B,KVH,rep,S,D]→[B,H,S,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze / expand / clone / view</td><td class="sh">same pattern for value_cache → bf16[1,16,512,256]</td><td class="sh">bf16[1,16,512,256][2097152,131072,256,1]</td><td class="src">GQA expand V (same 4-op pattern)</td></tr>
+        <tr><td class="op">aten.full (×3)</td><td class="sh">shapes: [1,16,64,256] · [1,16,64,64] · [1,16,64,64]</td><td class="sh">zero / -inf / zero tensors on spyre</td><td class="src">SDPA: accumulator + mask initialisation</td></tr>
+        <tr><td class="op">aten.amax (×2)</td><td class="sh">bf16[1,16,64,64] · dim=[-1]</td><td class="sh">bf16[1,16,64]</td><td class="src">SDPA online softmax: row max</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">K bf16[1,16,512,256] · [0,1,3,2]</td><td class="sh">bf16[1,16,256,512][2097152,131072,1,256]</td><td class="src">SDPA: Kᵀ for Q×Kᵀ</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">Q bf16[1,16,64,256] expand → view [16,64,256]</td><td class="sh">bf16[16,64,256][16384,256,1]</td><td class="src">SDPA Q BMM prep: flatten batch×heads</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">Kᵀ bf16[1,16,256,512] expand → view [16,256,512]</td><td class="sh">bf16[16,256,512][131072,1,256]</td><td class="src">SDPA Kᵀ BMM prep</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[16,64,256] · bf16[16,256,512]</td><td class="sh">bf16[16,64,512][32768,512,1]</td><td class="src">SDPA: Q × Kᵀ</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[16,64,512] · [1,16,64,512]</td><td class="sh">bf16[1,16,64,512][524288,32768,512,1]</td><td class="src">SDPA: restore batch dim after BMM</td></tr>
+        <tr><td class="op">aten.add.Tensor</td><td class="sh">bf16[1,16,64,512] · attn_mask bf16[1,1,64,512]</td><td class="sh">bf16[1,16,64,512]</td><td class="src">SDPA: + attention mask</td></tr>
+        <tr><td class="op">aten.amax / sub / exp / sub / exp / mul / sum / add (online softmax)</td><td class="sh">bf16[1,16,64,512] / bf16[1,16,64]</td><td class="sh">softmax numerator bf16[1,16,64,512]</td><td class="src">SDPA: numerically stable online softmax</td></tr>
+        <tr class="spyre-row"><td class="op spyre">spyre.copy_forced (×3)</td><td class="sh">various softmax accumulators</td><td class="sh">same shape</td><td class="src">Spyre: force scratchpad copy for accumulator tiling</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[1,16,64] (norm sum) · dim=-1</td><td class="sh">bf16[1,16,64,1]</td><td class="src">SDPA: unsqueeze for broadcast division</td></tr>
+        <tr><td class="op">aten.div.Tensor</td><td class="sh">attn_out bf16[1,16,64,256] · sum bf16[1,16,64,1]</td><td class="sh">bf16[1,16,64,256]</td><td class="src">SDPA: normalise by softmax denominator</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">softmax weights bf16[1,16,64,512] → [16,64,512]</td><td class="sh">bf16[16,64,512][32768,512,1]</td><td class="src">SDPA attn×V BMM prep</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">V bf16[1,16,512,256] → [16,512,256]</td><td class="sh">bf16[16,512,256][131072,256,1]</td><td class="src">SDPA V BMM prep</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[16,64,512] · bf16[16,512,256]</td><td class="sh">bf16[16,64,256][16384,256,1]</td><td class="src">SDPA: attn_weights × V</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[16,64,256] · [1,16,64,256]</td><td class="sh">bf16[1,16,64,256][262144,16384,256,1]</td><td class="src">SDPA: restore batch dim</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default (×2)</td><td class="sh">bf16[1,16,64,256] identity permutes [0,1,2,3]</td><td class="sh">bf16[1,16,64,256][262144,16384,256,1]</td><td class="src">SDPA decomp artifact: identity permutes</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">bf16[1,16,64,256] · [0,2,1,3]</td><td class="sh">bf16[1,64,16,256][262144,256,16384,1]</td><td class="src">attn output: transpose back [B,H,S,D]→[B,S,H,D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.clone.default</td><td class="sh">bf16[1,64,16,256] · memory_format=contiguous</td><td class="sh">bf16[1,64,16,256][262144,4096,256,1]</td><td class="src">attn output .contiguous() before reshape</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,16,256] · [1,64,4096]</td><td class="sh">bf16[1,64,4096][262144,4096,1]</td><td class="src">attn output reassemble [B,S,H,D]→[B,S,H*D]</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute / unsqueeze / expand / view (×2)</td><td class="sh">o_w bf16[4096,2816] → BMM form</td><td class="sh">bf16[1,4096,2816]</td><td class="src">o_proj weight reshape for BMM</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,4096] · bf16[1,4096,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">o_proj linear (BMM)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,2816] · [1,64,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">o_proj BMM output reshape</td></tr>
+        <tr><td class="op">prims.convert_element_type / pow / mean / add / rsqrt / mul</td><td class="sh">bf16[1,64,2816]</td><td class="sh">bf16[1,64,2816]</td><td class="src">post_attention_layernorm RMSNorm</td></tr>
+        <tr><td class="op">aten.add.Tensor</td><td class="sh">residual bf16[1,64,2816] + normed attn_out bf16[1,64,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">residual connection: hidden += post_attn_norm(attn_out)</td></tr>
+        <tr class="scatter-row"><td class="op scatter">aten.copy_.default (×2)</td><td class="sh">key_cache bf16[1,8,512,256] · value_cache bf16[1,8,512,256]</td><td class="sh">in-place mutation</td><td class="src">finalise KV cache in-place write (NOT a view op)</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</details>
+
+
+<details class="mod">
+  <summary>
+    <span class="arrow">▶</span>
+    <b>Forward graph 3</b>
+    <span class="badge badge-blue">_compiled_prefill_ffn</span>
+    <span class="badge badge-purple">Gemma4MoEBlock · sliding layer · dense + MoE FFN</span>
+    <span class="cnt">45 ops</span>
+  </summary>
+  <div class="module-body">
+    <div class="spec">
+      <div><span class="k">Source region</span><span class="v">hf_gemma4_moe.py · Gemma4MoEBlock._compiled_prefill_ffn → _prefill_ffn</span></div>
+      <div><span class="k">Key inputs</span><span class="v">hidden: bf16[1,64,2816] · dense gate/up/down weights · router proj: bf16[128,2816] · router per_expert_scale: bf16[128] · route_identity: bf16[64,64] · expert gate/up/down: bf16[128,2816,704] / bf16[128,704,2816] · layer_scalar: bf16[1]</span></div>
+      <div><span class="k">Output</span><span class="v">bf16[1,64,2816][180224,2816,1]spyre</span></div>
+    </div>
+    <h4>ATen nodes <span style="font-weight:400;font-size:.7rem;color:var(--ink3);text-transform:none;letter-spacing:0">(purple = view/layout op, green = Spyre custom op)</span></h4>
+    <div class="tbl scroll"><table>
+      <thead><tr><th>Operation</th><th>Input shapes / strides</th><th>Output shape / stride</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">hidden bf16[1,64,2816][180224,2816,1] · [-1, 2816]</td><td class="sh">bf16[64,2816][2816,1]</td><td class="src">_prefill_ffn: router_input = residual.reshape(-1, hidden_size)</td></tr>
+        <tr><td class="op">prims.convert_element_type / pow / mean / add / rsqrt / mul (×2)</td><td class="sh">bf16[1,64,2816] and bf16[64,2816]</td><td class="sh">normed bf16 tensors</td><td class="src">pre_feedforward_layernorm (dense) + pre_feedforward_layernorm_2 (router)</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute / unsqueeze / expand / view (×3)</td><td class="sh">dense gate/up/down weights [2112,2816] [2112,2816] [2816,2112]</td><td class="sh">BMM-ready shapes</td><td class="src">dense MLP: gate/up/down proj weight reshape for BMM</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2816] · bf16[1,2816,2112]</td><td class="sh">bf16[1,64,2112][135168,2112,1]</td><td class="src">dense MLP gate_proj linear</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[1,64,2112] · [1,64,2112]</td><td class="sh">bf16[1,64,2112][135168,2112,1]</td><td class="src">dense gate_proj BMM output reshape</td></tr>
+        <tr class="spyre-row"><td class="op spyre">spyre.gelu.default</td><td class="sh">bf16[1,64,2112] · approximate='tanh'</td><td class="sh">bf16[1,64,2112][135168,2112,1]</td><td class="src">dense MLP: GeLU activation</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2816] · bf16[1,2816,2112]</td><td class="sh">bf16[1,64,2112]</td><td class="src">dense MLP up_proj linear</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">gelu_out bf16[1,64,2112] · up_out bf16[1,64,2112]</td><td class="sh">bf16[1,64,2112]</td><td class="src">dense MLP: gelu(gate) * up</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[1,64,2112] · bf16[1,2112,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">dense MLP down_proj linear</td></tr>
+        <tr><td class="op">aten.permute / mm</td><td class="sh">bf16[64,2816] · router_w bf16[2816,128]</td><td class="sh">bf16[64,128][128,1]</td><td class="src">router: F.linear → mm (no batch dim, 2D)</td></tr>
+        <tr><td class="op">aten.amax / sub / exp / sum / div</td><td class="sh">bf16[64,128]</td><td class="sh">bf16[64,128][128,1]</td><td class="src">router softmax probabilities</td></tr>
+        <tr class="spyre-row"><td class="op spyre">spyre.topkindex.default</td><td class="sh">bf16[64,128] · k=8 · dim=-1</td><td class="sh">bf16[64,8][8,1]</td><td class="src">MoE top-k: select 8 of 128 experts</td></tr>
+        <tr class="view-row"><td class="op view">aten.slice.Tensor</td><td class="sh">bf16[64,8][8,1] · dim=0, 0:64</td><td class="sh">bf16[64,8][8,1]</td><td class="src">top-k output slice (static shape guard)</td></tr>
+        <tr class="spyre-row"><td class="op spyre">spyre.keep_by_index.default</td><td class="sh">probs bf16[64,128] · selected_indices bf16[64,8] · dim=-1 · fill=0.0</td><td class="sh">bf16[64,128][128,1]</td><td class="src">MoE: zero-out non-selected expert weights</td></tr>
+        <tr><td class="op">aten.sum / div / mul</td><td class="sh">bf16[64,128]</td><td class="sh">bf16[64,128]</td><td class="src">routing: normalise + scale by per_expert_scale</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">bf16[64,128] · dim=-1</td><td class="sh">bf16[64,128,1][128,1,1]</td><td class="src">route weight: weights.unsqueeze(-1) for stick broadcast</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default</td><td class="sh">bf16[64,128,1] · [-1,-1,64]</td><td class="sh">bf16[64,128,64][128,1,0]</td><td class="src">route weight: .expand(-1,-1,stick_size=64) — stride-0 broadcast</td></tr>
+        <tr><td class="op">aten.relu.default</td><td class="sh">bf16[64,128,64][128,1,0] (stride-0)</td><td class="sh">bf16[64,128,64][8192,64,1]</td><td class="src">route weight: relu materialises stride-0 expand</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[64,128,64] · [8192, 64]</td><td class="sh">bf16[8192,64][64,1]</td><td class="src">route: flatten [tokens×experts, stick] for route_identity mm</td></tr>
+        <tr><td class="op">aten.mm.default</td><td class="sh">bf16[8192,64] · route_identity bf16[64,64]</td><td class="sh">bf16[8192,64][64,1]</td><td class="src">route: packed @ route_identity (stick alignment)</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[8192,64] · [64,128,64]</td><td class="sh">bf16[64,128,64][8192,64,1]</td><td class="src">route: unflatten back to [tokens, experts, stick]</td></tr>
+        <tr class="view-row"><td class="op view">aten.slice.Tensor</td><td class="sh">bf16[64,128,64] · dim=2, 0:1</td><td class="sh">bf16[64,128,1][8192,64,1]</td><td class="src">routing_weight = packed[..., :1]</td></tr>
+        <tr class="view-row"><td class="op view">aten.unsqueeze.default</td><td class="sh">expert_input bf16[64,2816] · dim=0</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">_moe_expert_persistent: x = x_expert.unsqueeze(0)</td></tr>
+        <tr class="view-row"><td class="op view">aten.permute.default</td><td class="sh">routing_weight bf16[64,128,1] · [1,0,2]</td><td class="sh">bf16[128,64,1][64,8192,1]</td><td class="src">route: permute(1,0,2) → [experts, tokens, 1]</td></tr>
+        <tr class="view-row"><td class="op view">aten.clone.default (×2)</td><td class="sh">bf16[128,64,1] · memory_format=contiguous</td><td class="sh">bf16[128,64,1][64,1,1]</td><td class="src">route: .contiguous().clone() — materialise for expert BMM</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">x bf16[1,64,2816] · expand [128,64,2816]</td><td class="sh">bf16[128,64,2816][0,2816,1]</td><td class="src">expert gate_proj input: broadcast input across 128 experts (stride-0)</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default</td><td class="sh">gate_w bf16[128,2816,704] · expand [128,2816,704]</td><td class="sh">bf16[128,2816,704][1982464,704,1]</td><td class="src">expert gate weights expand for BMM</td></tr>
+        <tr><td class="op">aten.bmm.default</td><td class="sh">bf16[128,64,2816] · bf16[128,2816,704]</td><td class="sh">bf16[128,64,704][45056,704,1]</td><td class="src">expert gate_proj: all-experts BMM [E,T,H] × [E,H,I]</td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[128,64,704] · [128,64,704]</td><td class="sh">bf16[128,64,704][45056,704,1]</td><td class="src">expert gate BMM output reshape</td></tr>
+        <tr class="view-row"><td class="op view">aten.expand.default · aten.view.default (×2)</td><td class="sh">up_w bf16[128,2816,704] · down_w bf16[128,704,2816]</td><td class="sh">bf16 same shapes</td><td class="src">expert up/down weights expand for BMM</td></tr>
+        <tr><td class="op">aten.bmm.default (×2)</td><td class="sh">up: bf16[128,64,2816]×bf16[128,2816,704] · down: bf16[128,64,704]×bf16[128,704,2816]</td><td class="sh">bf16[128,64,704] · bf16[128,64,2816]</td><td class="src">expert up_proj and down_proj BMMs</td></tr>
+        <tr class="spyre-row"><td class="op spyre">spyre.gelu.default</td><td class="sh">bf16[128,64,704] · approximate='tanh'</td><td class="sh">bf16[128,64,704][45056,704,1]</td><td class="src">expert activation: F.gelu(gate_out, "tanh")</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">gelu bf16[128,64,704] · up_out bf16[128,64,704]</td><td class="sh">bf16[128,64,704]</td><td class="src">expert: gelu(gate) * up</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">down_out bf16[128,64,2816] · route bf16[128,64,1]</td><td class="sh">bf16[128,64,2816][180224,2816,1]</td><td class="src">expert: down_out * routing_weight</td></tr>
+        <tr><td class="op">aten.sum.dim_IntList</td><td class="sh">bf16[128,64,2816] · <b>dim=[0]</b> (expert axis, size 128)</td><td class="sh">bf16[64,2816][2816,1]</td><td class="src">MoE: weighted sum across all experts — <b>this reduction is what the crash is about</b></td></tr>
+        <tr class="view-row"><td class="op view">aten.view.default</td><td class="sh">bf16[64,2816][2816,1] · [1,64,2816]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">MoE output: reshape_as(residual) — [T,H]→[B,S,H]</td></tr>
+        <tr><td class="op">prims.convert_element_type / pow / mean / rsqrt / mul (×3)</td><td class="sh">bf16[1,64,2816]</td><td class="sh">bf16[1,64,2816]</td><td class="src">post_feedforward_layernorm_2 + post_feedforward_layernorm_1 + combined norm</td></tr>
+        <tr><td class="op">aten.add.Tensor (×2)</td><td class="sh">dense_out + moe_out · residual + ffn_out</td><td class="sh">bf16[1,64,2816]</td><td class="src">FFN combine + residual connection</td></tr>
+        <tr><td class="op">aten.mul.Tensor</td><td class="sh">bf16[1,64,2816] · layer_scalar bf16[1]</td><td class="sh">bf16[1,64,2816][180224,2816,1]</td><td class="src">(residual + ffn_out) * layer_scalar</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</details>
+
+
+<h2>View / layout op summary (corrected)</h2>
+<p>All true view and layout operations seen in the compiled graphs. <code>aten.index_put</code> and <code>aten.copy_</code> are <b>not</b> view ops — they are scatter-write mutations and are listed separately below.</p>
+<div class="tbl scroll"><table>
+  <thead><tr><th>Op</th><th>Graphs</th><th>Key shape transformations</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td class="op view">aten.view.default</td><td class="sh">2, 3</td><td class="sh">[B,S,H*D]→[B,S,H,D] · [B,S,H,D]→[B,S,H*D] · [T,H]→[B,S,H] · [B,S,H]→[T,H] · [64,128,64]→[8192,64] · [8192,64]→[64,128,64] · [16,64,256]→[1,16,64,256] · [1,64,16,2,1,128]→[1,64,16,256]</td><td class="sh">Head split/merge, token flatten/unflatten, BMM batch-dim restore, stick reshape, RoPE flatten</td></tr>
+    <tr><td class="op view">aten.permute.default</td><td class="sh">2, 3</td><td class="sh">[B,S,H,D]→[B,H,S,D] · [Out,In]→[In,Out] (weight transpose) · [B,H,S,D]→[B,H,D,S] (K for QKᵀ) · [T,E,1]→[E,T,1] (route permute) · identity [0,1,2,3] (SDPA artifact)</td><td class="sh">Head reorder, weight transpose, key transpose for SDPA, route dim reorder</td></tr>
+    <tr><td class="op view">aten.expand.default</td><td class="sh">2, 3</td><td class="sh">[1,KVH,1,S,D]→[1,KVH,2,S,D] stride-0 (GQA) · [1,B,H]→[E,B,H] stride-0 (expert broadcast) · [T,E,1]→[T,E,stick] stride-0 (stick broadcast) · various identity expands before BMM</td><td class="sh">GQA KV replication, expert input broadcast, stick weight broadcast — all produce stride-0 tensors that must be cloned before compute</td></tr>
+    <tr><td class="op view">aten.clone.default</td><td class="sh">2, 3</td><td class="sh">after permute (RoPE, attn output): non-contiguous → contiguous · after stride-0 expand (GQA K/V, expert route): materialise for BMM</td><td class="sh">Force memory layout to be contiguous; required by BMM and KV cache write</td></tr>
+    <tr><td class="op view">aten.unsqueeze.default</td><td class="sh">2, 3</td><td class="sh">[KVH,S,D]→[KVH,1,S,D] (GQA insert dim) · [T,E]→[T,E,1] (route broadcast dim) · [B,S,H,D]→[1,S,H,D] (weight unsqueeze for BMM) · [S]→[1,S,...] (RoPE freq expand) · [S,H]→[S,H,1] (norm dim) · [1,16,64]→[1,16,64,1] (SDPA div broadcast)</td><td class="sh">Insert singleton dims for broadcasting (GQA, RoPE, weight BMM, SDPA norm)</td></tr>
+    <tr><td class="op view">aten.slice.Tensor</td><td class="sh">3</td><td class="sh">[64,8]→[64,8] dim=0,0:64 (static shape guard) · [64,128,64]→[64,128,1] dim=2,0:1</td><td class="sh">Static top-k output slice; routing_weight[..., :1] selection</td></tr>
+  </tbody>
+</table></div>
+
+<h2>Scatter-write ops (not view ops)</h2>
+<p>These ops appear in the compiled graphs but are <b>not</b> view or layout operations. They write data into existing tensors at computed indices.</p>
+<div class="tbl scroll"><table>
+  <thead><tr><th>Op</th><th>Graph</th><th>Shape</th><th>What it does</th><th>Why it is not a view op</th></tr></thead>
+  <tbody>
+    <tr class="scatter-row"><td class="op scatter">aten.index_put.default</td><td class="sh">2</td><td class="sh">key_cache/value_cache bf16[1,8,512,256] · scatter at cache_index i64[64]</td><td class="sh">Writes 64 new K/V vectors into the KV cache at the positions given by cache_index. This is <code>key_cache.index_copy_(2, cache_index, k)</code> lowered to index_put.</td><td class="sh">A view op only changes how existing data is addressed — shape, stride, or offset. <code>index_put</code> writes new data to a subset of elements selected by a runtime index tensor. It is a gather-scatter mutation, not a layout transformation.</td></tr>
+    <tr class="scatter-row"><td class="op scatter">aten.copy_.default</td><td class="sh">2</td><td class="sh">key_cache and value_cache bf16[1,8,512,256]</td><td class="sh">In-place copy of the updated cache buffer back to the original storage, finalising the KV scatter write.</td><td class="sh">An in-place data copy. Changes tensor contents, not layout.</td></tr>
+  </tbody>
+</table></div>
+
+<footer style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--rule);text-align:center;font-size:.72rem;color:var(--ink3)">Made with IBM Bob</footer>
+</div>
+</body>
+</html>

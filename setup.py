@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import sys
 import shutil
 from pathlib import Path
 from typing import cast
@@ -20,6 +21,29 @@ from typing import cast
 os.environ.setdefault(
     "TORCH_DEVICE_BACKEND_AUTOLOAD", "0"
 )  # must be before torch import
+<<<<<<< Updated upstream
+=======
+
+# Check if we should use stub dependencies (Python-only build without C++ extensions)
+USE_STUBS = os.environ.get("USE_STUBS", "0") == "1"
+
+if USE_STUBS:
+    STUB_DIR = Path(__file__).resolve().parent / "torch_spyre" / "mockdevice" / "stubs"
+    sys.path.insert(0, str(STUB_DIR))
+    print("=" * 60)
+    print("Building with STUB dependencies (Python-only)")
+    print(f"STUB_DIR: {STUB_DIR}")
+    print("No C++ compilation required")
+    print("=" * 60)
+else:
+    os.environ.setdefault(
+        "SEN_COMMON_HEADERS", str(Path(__file__).resolve().parent.parent / "flex")
+    )
+    print("=" * 60)
+    print("Building with REAL dependencies")
+    print("=" * 60)
+
+>>>>>>> Stashed changes
 
 import glob
 import regex as re
@@ -54,6 +78,10 @@ version = get_torch_spyre_version()
 
 
 def check_libflex():
+    if USE_STUBS:
+        stub_lib_dir = Path(__file__).resolve().parent / "torch_spyre" / "mockdevice" / "stubs" / "lib"
+        if stub_lib_dir.exists() and list(stub_lib_dir.glob("libflex.so*")):
+            return True
     ld_library_paths = os.environ.get("LD_LIBRARY_PATH", "").split(":")
     for path in ld_library_paths:
         if glob.glob(os.path.join(path, "libflex.so")):
@@ -163,7 +191,12 @@ else:
             "or set the SPYRE_COMMS_INSTALL_DIR to the Spyre Comms install directory."
         )
 
+<<<<<<< Updated upstream
 LIBRARIES = ["flex"]
+=======
+if not USE_STUBS and "SEN_COMMON_HEADERS" in os.environ:
+    INCLUDE_DIRS += [os.environ["SEN_COMMON_HEADERS"]]
+>>>>>>> Stashed changes
 
 
 if COMPILE_AIUPTI:  # Include kineto and libaiupti headers
@@ -267,8 +300,6 @@ class BuildPyWithVersion(_build_py):
 
 
 if __name__ == "__main__":
-    import sys
-
     is_meta = any(
         cmd in sys.argv for cmd in ["dist_info", "egg_info", "install_egg_info"]
     )
@@ -276,7 +307,19 @@ if __name__ == "__main__":
     if is_meta:
         setup(
             entry_points={
-                "torch.backends": [
+                "mockdevice.torch.backends": [
+                    "torch_spyre = torch_spyre:_autoload",
+                ],
+            },
+        )
+    elif USE_STUBS:
+        print("=" * 60)
+        print("SKIPPING C++ EXTENSION COMPILATION (USE_STUBS=1)")
+        print("Using Python-only mock device implementation")
+        print("=" * 60)
+        setup(
+            entry_points={
+                "mockdevice.torch.backends": [
                     "torch_spyre = torch_spyre:_autoload",
                 ],
             },
@@ -361,7 +404,7 @@ if __name__ == "__main__":
                 "clean": clean,
             },
             entry_points={
-                "torch.backends": [
+                "mockdevice.torch.backends": [
                     "torch_spyre = torch_spyre:_autoload",
                 ],
             },

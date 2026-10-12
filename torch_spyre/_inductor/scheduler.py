@@ -545,6 +545,15 @@ class SuperDSCScheduling(BaseScheduling):
         """
         # Overrides superclass method that raises NotImplementedError.
         pass
+    
+    def codegen_comment(self, node_schedule, kernel_name):
+        """
+        Generate a comment in the output code for debugging purposes.
+        This is a stub implementation for the Spyre backend.
+        """
+        # This method is called by codegen_node but we don't need to generate
+        # comments in the SDSC JSON output, so we just pass
+        pass
 
     def can_buffer_be_removed_through_fusion(
         self, name: str, fused_node_names: OrderedSet[str]
@@ -650,7 +659,17 @@ class SuperDSCScheduling(BaseScheduling):
         is bound here: the pool size, the argument list and the HBM addresses.
         """
         assert self.scheduler
+<<<<<<< Updated upstream
         nodes = self._live_nodes(node)
+=======
+        # Get removed_ops if it exists, otherwise use empty set
+        removed_ops = getattr(self.scheduler, 'removed_ops', set())
+        nodes = [
+            node
+            for node in node.get_nodes()
+            if node.get_name() not in removed_ops
+        ]
+>>>>>>> Stashed changes
         if len(nodes) == 0:
             return
         name = node.get_name()

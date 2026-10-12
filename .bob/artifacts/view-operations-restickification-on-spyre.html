@@ -1,0 +1,600 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>View Operations &amp; Restickification on Spyre</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 40px 20px 60px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ── */
+  .header { margin-bottom: 32px; }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2328;
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: #57606a;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── Foundation section ── */
+  .foundation {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 32px;
+  }
+  .foundation h2 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #57606a;
+    margin-bottom: 10px;
+  }
+  .foundation p { font-size: 14px; margin-bottom: 8px; }
+  .foundation p:last-child { margin-bottom: 0; }
+
+  .pill {
+    display: inline-block;
+    background: #e8f0fb;
+    color: #3b82d4;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 1px 7px;
+    margin-right: 4px;
+  }
+  .pill-free {
+    background: #eaf6ea;
+    color: #2a7a3b;
+  }
+  .pill-cost {
+    background: #fdf2e9;
+    color: #b45309;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #57606a;
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* ── Scenario cards ── */
+  .scenario {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .scenario-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 18px;
+    background: #f7f8fa;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .scenario-number {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #3b82d4;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .scenario-title { font-size: 15px; font-weight: 600; color: #1f2328; }
+  .scenario-subtitle { font-size: 12px; color: #57606a; margin-top: 2px; }
+
+  .scenario-body { padding: 16px 18px; }
+
+  .scenario-body h4 {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #57606a;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .scenario-body h4:first-child { margin-top: 0; }
+
+  .scenario-body p { font-size: 14px; margin-bottom: 8px; }
+  .scenario-body p:last-child { margin-bottom: 0; }
+
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 12px;
+    background: #f0f2f4;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #1f2328;
+  }
+
+  pre {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #1f2328;
+  }
+
+  .source-tag {
+    display: inline-block;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 11px;
+    background: #f0f2f4;
+    border: 1px solid #d0d7de;
+    border-radius: 3px;
+    padding: 2px 7px;
+    color: #57606a;
+    margin-bottom: 4px;
+    margin-right: 4px;
+  }
+
+  .rule-box {
+    background: #fdf8f0;
+    border-left: 3px solid #d97706;
+    padding: 8px 12px;
+    border-radius: 0 4px 4px 0;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+
+  /* ── Summary table ── */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  .summary-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 10px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    color: #57606a;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .summary-table td {
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  .summary-table tr:nth-child(even) td { background: #fafbfc; }
+
+  /* ── Mental model diagram ── */
+  .diagram {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+    font-size: 13px;
+  }
+  .diagram h3 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #1f2328;
+  }
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 10px;
+  }
+  .flow-box {
+    background: #fff;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    min-width: 80px;
+  }
+  .flow-box.green { border-color: #2a7a3b; color: #2a7a3b; background: #eaf6ea; }
+  .flow-box.orange { border-color: #d97706; color: #b45309; background: #fdf2e9; }
+  .flow-arrow {
+    font-size: 16px;
+    color: #57606a;
+    padding: 0 8px;
+  }
+  .flow-note {
+    font-size: 11px;
+    color: #57606a;
+    margin-top: 4px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    padding-top: 14px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="header">
+    <h1>View Operations &amp; Restickification on Spyre</h1>
+    <p>
+      A reference covering when a PyTorch view operation leads to a restickify on the Spyre device backend,
+      why it happens, and which source files determine it.
+    </p>
+  </div>
+
+  
+  <div class="foundation">
+    <h2>Background: Sticks, Stickify, and Restickify</h2>
+    <p>
+      Spyre stores tensor data in <strong>sticks</strong> — 128-byte-aligned chunks.
+      Float16 packs <strong>64 elements per stick</strong>; float32 packs <strong>32 elements per stick</strong>.
+      When a tensor first arrives on the device it is <strong>stickified</strong>: rearranged into
+      this tiled layout described by a <code>SpyreTensorLayout</code> (with fields <code>device_size</code>,
+      <code>stride_map</code>, and <code>device_dtype</code>).
+    </p>
+    <p>
+      A <strong>restickify</strong> is a device-side data-movement operation that converts a tensor
+      from one stick layout to a different one. It costs real memory bandwidth and is inserted by
+      the compiler when a layout mismatch is detected on an input edge.
+    </p>
+    <p>
+      <span class="pill pill-free">Free (metadata only)</span> View ops copy the existing
+      <code>SpyreTensorLayout</code> unchanged — no device data moves.
+       
+      <span class="pill pill-cost">Restickify triggered</span> happens when the next op
+      has a hardware constraint on which dimension must be the stick dimension and the
+      inherited layout doesn't satisfy it.
+    </p>
+  </div>
+
+  
+  <div class="diagram">
+    <h3>How a view becomes a restickify (compiler pipeline)</h3>
+    <div class="flow">
+      <div class="flow-box">View op<br /><small>(free)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">Layout propagation<br /><small>propagate_layouts.py</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">Mismatch detected<br /><small>finalize_layouts()</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">Restickify inserted<br /><small>insert_restickify.py</small></div>
+    </div>
+    <p class="flow-note">
+      The view itself never touches device data. The restickify is inserted <em>after</em> the view, before the consuming op,
+      when <code>finalize_layouts()</code> walks every input edge and finds the committed layout is incompatible with
+      what the op requires.
+    </p>
+  </div>
+
+  
+  <div class="section-label">The Five Scenarios</div>
+
+  
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-number">1</div>
+      <div>
+        <div class="scenario-title">View changes which dimension is the stick, and the next op is a matmul</div>
+        <div class="scenario-subtitle">Consumer: <code>mm</code> / <code>bmm</code></div>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <h4>The hardware rule</h4>
+      <div class="rule-box">
+        Matmul (DF16) requires: <strong>x (left input)</strong> stick on the K (reduction) dimension;
+        <strong>y (right input / weight)</strong> stick on the N (output-column) dimension.
+      </div>
+
+      <h4>Why a view causes it</h4>
+      <p>
+        A <code>view()</code> or <code>reshape()</code> is free — it just updates host-side
+        size/stride metadata and copies the old <code>SpyreTensorLayout</code> unchanged onto the new
+        tensor. But if the shape change causes the dimension that used to be "K" to no longer
+        map cleanly to the stick in the inherited layout, the matmul sees an incompatible input.
+        <code>find_stick_compatible_input_layout()</code> has two passes: first it checks whether
+        any existing candidate layout already satisfies the stick requirement (zero cost); if not,
+        it searches for a layout that <em>can</em> be restickified to the right stick — and if that
+        succeeds, a restickify is scheduled.
+      </p>
+      <pre><code>x = torch.randn(128, 64, device="spyre")  # prior op left stick on dim 0 (rows)
+x_view = x.view(128, 64)                  # free — same layout carried over
+result = torch.mm(x_view, weight)         # matmul needs stick on dim 1 (K=64)
+                                          # → restickify injected before mm</code></pre>
+
+      <h4>Source</h4>
+      <span class="source-tag">propagate_layouts.py — _matmul_layouts() L516</span>
+      <span class="source-tag">propagate_layouts.py — find_stick_compatible_input_layout() L475</span>
+      <span class="source-tag">optimize_restickify.py — FixedInOutNode L169</span>
+    </div>
+  </div>
+
+  
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-number">2</div>
+      <div>
+        <div class="scenario-title">Slice along the stick dimension followed by <code>.contiguous()</code></div>
+        <div class="scenario-subtitle">Consumer: <code>aten.clone</code> (generated by <code>.contiguous()</code>)</div>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <h4>The hardware rule</h4>
+      <div class="rule-box">
+        The clone / contiguous op can work on any stick layout as long as the stick expression is
+        <strong>offset-free</strong> — i.e., the slice starts on a stick boundary. A non-zero
+        intra-stick offset means the data must be repacked first.
+      </div>
+
+      <h4>Why a view causes it</h4>
+      <p>
+        When you slice along the stick dimension (e.g. <code>t[:, 32:]</code> on a tensor whose
+        stick is on <code>dim 1</code>), the resulting view has a non-zero element offset <em>inside</em>
+        a stick. Spyre can't simply start reading sticks from an arbitrary byte position inside them.
+        The <code>_clone_layout()</code> function checks <code>is_stick_expr_offset_free()</code>: if
+        the check fails (Case 2), it inserts a restickify <em>before</em> the clone to swap the stick
+        dimension to a safe one, and the clone then acts as a second swap to restore the expected layout.
+      </p>
+      <pre><code>t = torch.randn(128, 64, device="spyre", dtype=torch.float16)
+# 64 elements fill exactly one stick — but slicing shifts the offset:
+sliced = t[:, 32:]      # host view with intra-stick offset
+c = sliced.contiguous() # triggers clone; offset detected → restickify inserted</code></pre>
+
+      <h4>Source</h4>
+      <span class="source-tag">propagate_layouts.py — _clone_layout() L349</span>
+      <span class="source-tag">propagate_layouts.py — is_stick_expr_offset_free() (via pass_utils)</span>
+      <p style="margin-top:8px;font-size:13px;color:#57606a">
+        The two-case structure is documented verbatim in the <code>_clone_layout()</code> docstring at L352–365.
+      </p>
+    </div>
+  </div>
+
+  
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-number">3</div>
+      <div>
+        <div class="scenario-title">Two view-derived tensors with incompatible stick layouts fed into a pointwise op</div>
+        <div class="scenario-subtitle">Consumer: any multi-input pointwise op (<code>add</code>, <code>mul</code>, <code>where</code>, …)</div>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <h4>The hardware rule</h4>
+      <div class="rule-box">
+        All inputs to an element-wise pointwise op must agree on the same stick expression.
+        The compiler picks one stick and restickifies any input that doesn't conform.
+      </div>
+
+      <h4>Why a view causes it</h4>
+      <p>
+        <code>transpose()</code> is a view — it's free. But it carries the old
+        <code>SpyreTensorLayout</code> unchanged while reporting a new host shape.
+        If you then add the transposed tensor to the original, the two tensors
+        appear to have the <em>same</em> on-device tiling but now correspond to
+        different logical dimensions. <code>_multi_arg_pointwise_layouts()</code> computes
+        the set of stick expressions that are compatible across <em>all</em> inputs.
+        If no single stick works for every input as-is, the optimizer (via <code>AllSameNode</code>)
+        schedules restickifies on the minority inputs.
+      </p>
+      <pre><code>a = torch.randn(4, 128, 64, device="spyre")  # stick on dim 2 (size 64)
+b = a.transpose(1, 2)   # free view: shape (4, 64, 128), but layout unchanged
+c = a + b               # a: stick on last dim (64); b: stick is now on middle dim
+                        # → restickify on b (or a) to unify stick dimension</code></pre>
+
+      <h4>Source</h4>
+      <span class="source-tag">propagate_layouts.py — _multi_arg_pointwise_layouts() L582</span>
+      <span class="source-tag">optimize_restickify.py — AllSameNode L149</span>
+    </div>
+  </div>
+
+  
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-number">4</div>
+      <div>
+        <div class="scenario-title">Dtype cast after a view that introduced an intra-stick offset</div>
+        <div class="scenario-subtitle">Consumer: <code>prims.convert_element_type</code> (dtype change, e.g. <code>.to(torch.float32)</code>)</div>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <h4>The hardware rule</h4>
+      <div class="rule-box">
+        A dtype conversion between different element sizes (e.g. float16 → float32) requires
+        the stick expression to be <strong>offset-free</strong>. If not, the input layouts
+        candidate returns empty, falling back to a restickify.
+      </div>
+
+      <h4>Why a view causes it</h4>
+      <p>
+        Float16 has 64 elements per stick; float32 has 32. A slice or view that shifts
+        the start position within the stick dimension means the element boundaries
+        no longer align cleanly when reinterpreting bytes for the wider dtype.
+        In <code>_single_arg_op_layout()</code>, the <code>prims.convert_element_type</code>
+        branch explicitly calls <code>is_stick_expr_offset_free()</code>; if the check fails,
+        it returns an empty list. The caller then raises <code>Unsupported</code> or falls
+        through to candidate layout scanning, which eventually results in a restickify being
+        required before the cast can proceed.
+      </p>
+      <pre><code>t = torch.randn(128, 63, device="spyre", dtype=torch.float16)
+# 63 is not divisible by 64 → last stick has padding
+sliced = t[:, 1:]           # shifts start by 1 → non-zero intra-stick offset
+casted = sliced.to(torch.float32)  # offset + dtype change = invalid alignment
+                                   # → restickify inserted before cast</code></pre>
+
+      <h4>Source</h4>
+      <span class="source-tag">propagate_layouts.py — _single_arg_op_layout() L269</span>
+      <p style="margin-top:8px;font-size:13px;color:#57606a">
+        The exact branch is the <code>case prims.convert_element_type.default</code> match at L269.
+        The <code>return []</code> at L278 is the trigger.
+      </p>
+    </div>
+  </div>
+
+  
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-number">5</div>
+      <div>
+        <div class="scenario-title">View leaves the stick on the wrong dimension before layer norm components</div>
+        <div class="scenario-subtitle">Consumer: <code>exx2</code> (fused mean/variance) or <code>layernormnorm</code></div>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <h4>The hardware rule</h4>
+      <div class="rule-box">
+        Both <code>exx2</code> and <code>layernormnorm</code> require the input stick to be on
+        the <strong>reduction/normalization dimension</strong> (the last logical dimension).
+        Any other stick placement requires a restickify.
+      </div>
+
+      <h4>Why a view causes it</h4>
+      <p>
+        Layer norm decomposes into <code>exx2</code> (mean + variance) and <code>layernormnorm</code>
+        (normalize + scale). Both ops have a fixed hardware constraint: the stick must land on the
+        last dim (the normalization dim). If a preceding transpose or reshape leaves the stick on
+        a different dimension, the input is incompatible. <code>_exx2_layout()</code> and
+        <code>_layernormnorm_layout()</code> both call <code>find_stick_compatible_input_layout()</code>
+        asking for a layout with the stick on the reduction variable. If none of the candidate input
+        layouts satisfy this, a restickify is scheduled via <code>FixedInOutNode</code>.
+      </p>
+      <pre><code>x = torch.randn(batch, seq, 512, device="spyre")
+# A prior transpose left the stick on dim 1 (seq), not dim 2 (512)
+x_view = x.view(batch * seq, 512)   # free collapse — stick still not on last dim
+y = layer_norm(x_view, [512])       # exx2 requires stick on dim 512
+                                    # → restickify injected before exx2</code></pre>
+
+      <h4>Source</h4>
+      <span class="source-tag">propagate_layouts.py — _exx2_layout() L421</span>
+      <span class="source-tag">propagate_layouts.py — _layernormnorm_layout() L444</span>
+      <p style="margin-top:8px;font-size:13px;color:#57606a">
+        The requirement is stated verbatim in both docstrings. <code>FixedInOutNode</code> is the cost node
+        that signals "this input must have exactly this layout — restickify if it doesn't."
+      </p>
+    </div>
+  </div>
+
+  
+  <div class="section-label" style="margin-top:32px">Quick Reference</div>
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>View operation</th>
+        <th>Consumer op</th>
+        <th>Root cause</th>
+        <th>Key source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>view()</code> / <code>reshape()</code></td>
+        <td><code>mm</code> / <code>bmm</code></td>
+        <td>Stick no longer maps to the K dimension after reshape</td>
+        <td><code>_matmul_layouts()</code></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Slice along stick dim</td>
+        <td><code>clone</code> / <code>.contiguous()</code></td>
+        <td>Non-zero intra-stick offset; sticks can't be read from mid-boundary</td>
+        <td><code>_clone_layout()</code></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>transpose()</code> then element-wise op</td>
+        <td><code>add</code>, <code>mul</code>, <code>where</code>, …</td>
+        <td>Two inputs carry different stick layouts; multi-arg pointwise requires one unified stick</td>
+        <td><code>_multi_arg_pointwise_layouts()</code></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>Slice / view then <code>.to(dtype)</code></td>
+        <td><code>convert_element_type</code></td>
+        <td>Offset in stick makes cross-dtype alignment invalid</td>
+        <td><code>_single_arg_op_layout()</code> L269</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>Any view leaving stick on non-last dim</td>
+        <td><code>exx2</code> / <code>layernormnorm</code></td>
+        <td>Hardware requires stick on reduction dim; wrong dim after view</td>
+        <td><code>_exx2_layout()</code>, <code>_layernormnorm_layout()</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <div class="foundation" style="margin-top:24px;margin-bottom:0">
+    <h2>The Common Thread</h2>
+    <p>
+      A view is always free: it copies the existing <code>SpyreTensorLayout</code> unchanged onto the
+      new tensor handle — no device data moves. This is done in
+      <code>spyre_alias_with_sizes_and_strides()</code> in <code>spyre_views.cpp</code>.
+    </p>
+    <p>
+      A restickify becomes necessary when the <em>next op after the view</em> has a hardware
+      constraint on which dimension carries the stick. Because the view changed the shape (or access
+      pattern) without updating the device layout, there is now a mismatch between the on-device
+      tiling and what the op expects. The compiler detects this in <code>finalize_layouts()</code>
+      (<code>insert_restickify.py</code>) and inserts the restickify on the affected input edge.
+    </p>
+  </div>
+
+  <div class="footer">Made with IBM Bob</div>
+</div>
+</body>
+</html>

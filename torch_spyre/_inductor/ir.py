@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<< Updated upstream
 from typing import Any, Callable, Optional, Sequence, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .pass_utils import PerCoreView
 
+=======
+import os
+from typing import Any, Callable, Optional, Sequence
+>>>>>>> Stashed changes
 
 from sympy import Expr
 import torch
@@ -374,7 +379,25 @@ def _resize_device_layout(
 
 class SpyreConstantFallback(ir.ExternKernel):
     def codegen(self, wrapper: PythonWrapperCodegen) -> None:
-        wrapper.generate_const_tensor_fallback(self)
+        # Check if wrapper has the method (our custom wrappers do, base PyTorch ones don't)
+        if hasattr(wrapper, 'generate_const_tensor_fallback'):
+            wrapper.generate_const_tensor_fallback(self)
+        else:
+            # Fallback implementation for base PythonWrapperCodegen
+            if os.environ.get("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+                # In mock mode, create tensor and move to spyre device
+                value = self.constant_args[0]
+                dtype = self.layout.dtype
+                device = self.layout.device
+                wrapper.writeline(f'{self.get_name()} = torch.tensor({value}, dtype={dtype}).to("{device}")')
+            else:
+                # Hardware mode: use spyre_constant_tensor
+                value = self.constant_args[0]
+                dtype = self.layout.dtype
+                device = self.layout.device
+                wrapper.writeline(
+                    f'{self.get_name()} = spyre_constant_tensor({value}, torch.device("{device}"), {dtype})'
+                )
 
     def should_allocate(self) -> bool:
         return False

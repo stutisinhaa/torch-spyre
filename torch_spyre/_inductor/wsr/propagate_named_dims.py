@@ -611,7 +611,8 @@ def _assign_dim_hints_impl(operations: list[Operation]) -> None:
         if hasattr(op, "work_div_loop_info"):
             del op.work_div_loop_info  # type: ignore[attr-defined]
         dp = getattr(op, "_dim_prop_info", None)
-        op_hints = get_op_hints(op) if dp and dp.loop_var_dims else {}
+        _all_op_hints = get_op_hints(op)
+        op_hints = _all_op_hints if dp and dp.loop_var_dims else {}
         if not op_hints:
             # Preserve any WhileLoop-splice-synthesized hints already stamped
             # by for_each_tile_lowering.py's _synthesize_dim_hints_for_group

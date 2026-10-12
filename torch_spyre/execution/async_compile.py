@@ -21,10 +21,14 @@ from collections.abc import Sequence
 from concurrent.futures import Future, TimeoutError as FuturesTimeoutError
 from typing import Any, cast
 
+<<<<<<< Updated upstream
 import torch
 from torch._inductor.async_compile import AsyncCompile, get_compile_threads
 from torch._inductor.codecache import CodeCacheFuture
 from torch._inductor.compile_worker.subproc_pool import SubprocException
+=======
+from torch._inductor.async_compile import AsyncCompile
+>>>>>>> Stashed changes
 from torch._inductor.runtime.runtime_utils import cache_dir
 from torch_spyre._inductor import config as _spyre_config
 from torch_spyre._inductor.logging_utils import get_inductor_logger
@@ -130,6 +134,7 @@ def get_output_dir(kernel_name: str):
     return kernel_output_dir
 
 
+<<<<<<< Updated upstream
 def _compile_to_dir(
     kernel_name: str,
     compile_dir: str,
@@ -379,6 +384,15 @@ class SpyreAsyncCompile(AsyncCompile):
         )
         self._pending_spyre_futures.append(future)
         return future
+=======
+class SpyreAsyncCompile:
+    def __init__(self) -> None:
+        self._cpu_async_compile = (
+            AsyncCompile()
+            if os.getenv("TORCH_SPYRE_MOCK_DEVICE", "0") == "1"
+            else None
+        )
+>>>>>>> Stashed changes
 
     def sdsc(
         self,
@@ -416,6 +430,7 @@ class SpyreAsyncCompile(AsyncCompile):
                 )
             kernel_provenance = None
 
+<<<<<<< Updated upstream
         use_cache = (
             _spyre_config.spyre_kernel_cache
             and not torch._inductor.config.force_disable_caches
@@ -638,11 +653,35 @@ class SpyreAsyncCompile(AsyncCompile):
                     kernel_name=kernel_name,
                     code_dir=output_dir,
                 )
+=======
+        # Invoke backend compiler of SDSC Bundle.  In mock device mode dxp_standalone
+        # is not installed, so catch the error rather than skipping the call entirely.
+        # Tests that verify subprocess.run is invoked still see the call; the
+        # FileNotFoundError / CalledProcessError is silently swallowed in mock mode.
+        try:
+            with torch.profiler.record_function(f"dxp_standalone:{kernel_name}"):
+                subprocess.run(["dxp_standalone", "--bundle", "-d", output_dir], check=True)
+        except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+            if os.getenv("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+                logger.info(
+                    f"[MOCK_DEVICE] dxp_standalone not available, skipping compilation"
+                    f" for {kernel_name}: {exc}"
+                )
+            else:
+>>>>>>> Stashed changes
                 raise
 
         return SpyreSDSCKernelRunner(kernel_name, output_dir)
 
+    def cpp_pybinding(self, argtypes: list[str], source_code: str):
+        if self._cpu_async_compile is None:
+            raise AttributeError(
+                "cpp_pybinding is only available in TORCH_SPYRE_MOCK_DEVICE=1 mode"
+            )
+        return self._cpu_async_compile.cpp_pybinding(argtypes, source_code)
+
     def wait(self, scope: dict[str, Any]) -> None:
+<<<<<<< Updated upstream
         try:
             super().wait(scope)
         except Exception:
@@ -668,3 +707,9 @@ class SpyreAsyncCompile(AsyncCompile):
                 )
             self._provenance_attempt_count = 0
             self._provenance_failure_count = 0
+=======
+        if self._cpu_async_compile is not None:
+            cpu_wait = getattr(self._cpu_async_compile, "wait", None)
+            if callable(cpu_wait):
+                cpu_wait(scope)
+>>>>>>> Stashed changes

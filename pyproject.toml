@@ -25,6 +25,7 @@ description = "Torch-Spyre out of tree registration"
 dependencies = [
     "numpy",
     "regex",
+<<<<<<< Updated upstream
     "torch~=2.13.0",
 #    "torch>=2.13.0",
     "psutil",
@@ -35,8 +36,12 @@ dependencies = [
     # greedy fallback (ppc64le gets a from-source build in spyre-frameworks
     # instead, installed out-of-band -- see pipelines/components/ortools there).
     "ortools>=9.0; platform_machine != 's390x' and platform_machine != 'ppc64le'",
+=======
+    "torch>=2.9.0",
+    "psutil~=7.2.1"
+>>>>>>> Stashed changes
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dynamic = ["version"]
 
 [dependency-groups]
@@ -48,6 +53,7 @@ dynamic = ["version"]
 # against is `tools/ktir-mlir-frontend.pin`, which explains the rest.
 
 [project.optional-dependencies]
+<<<<<<< Updated upstream
 safetensors = ["safetensors>=0.8.0"]
 # ortools is now a base dependency (on wheel-supported arches) since layout_solver
 # defaults to "cpsat" -- see `dependencies` above. This extra is kept as a no-op
@@ -55,6 +61,10 @@ safetensors = ["safetensors>=0.8.0"]
 # Containerfile.dev) keep working unchanged.
 cpsat = [
     "ortools>=9.0; platform_machine != 's390x' and platform_machine != 'ppc64le'",
+=======
+mock = [
+    "mockdevice>=0.1.0"
+>>>>>>> Stashed changes
 ]
 build = [ # no-isolation build
     # any change here should be reflected in the build system above

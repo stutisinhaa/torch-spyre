@@ -1,0 +1,539 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gemma 4 26B-A4B-it — View Operations on torch-spyre</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 32px 16px 48px;
+  }
+  .page { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 24px; }
+  h2 { font-size: 15px; font-weight: 600; margin: 28px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 13px; font-weight: 600; margin: 18px 0 6px; }
+
+  /* Legend badges */
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge-green  { background: #d1fae5; color: #065f46; }
+  .badge-yellow { background: #fef9c3; color: #713f12; }
+  .badge-red    { background: #fee2e2; color: #7f1d1d; }
+  .badge-blue   { background: #dbeafe; color: #1e3a8a; }
+  .badge-gray   { background: #f3f4f6; color: #374151; }
+
+  /* Main table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  thead tr { background: #f7f8fa; }
+  th { text-align: left; padding: 7px 10px; font-weight: 600; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .col-op { font-weight: 600; font-family: monospace; font-size: 12px; }
+  .col-freq { color: #57606a; text-align: center; }
+  .col-status { text-align: center; }
+  .col-risk { text-align: center; }
+
+  /* Architecture sections */
+  .arch-card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #3b82d4;
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .arch-card-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .arch-card-body  { font-size: 12px; color: #1f2328; line-height: 1.7; }
+  .arch-card-body code {
+    background: #e5e7eb; border-radius: 3px;
+    padding: 1px 4px; font-size: 11px; font-family: monospace;
+  }
+
+  /* Risk cards */
+  .risk-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .risk-card {
+    display: flex; gap: 12px; align-items: flex-start;
+    border: 1px solid #e5e7eb; border-radius: 4px; padding: 10px 12px;
+  }
+  .risk-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .risk-title { font-weight: 600; font-size: 13px; }
+  .risk-body  { font-size: 12px; color: #57606a; margin-top: 2px; }
+  .risk-card.red    { border-left: 3px solid #ef4444; background: #fff8f8; }
+  .risk-card.yellow { border-left: 3px solid #f59e0b; background: #fffdf0; }
+  .risk-card.green  { border-left: 3px solid #10b981; background: #f0fdf4; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+
+  footer {
+    margin-top: 36px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Gemma 4 26B-A4B-it — View Operations on torch-spyre</h1>
+  <div class="subtitle">Compiled-path (torch.compile) view op support analysis · 46 transformer layers · MoE FFN · GQA (28 Q heads / 14 KV heads) · head_dim=256 · hidden=3584</div>
+
+  
+  <h2>Where View Ops Appear in the Model</h2>
+
+  <div class="arch-card">
+    <div class="arch-card-title">Attention (every layer)</div>
+    <div class="arch-card-body">
+      QKV projection output <code>[B, S, H*D]</code> →
+      <strong>reshape/view</strong> → <code>[B, S, H, D]</code> →
+      <strong>permute(0,2,1,3)</strong> → <code>[B, H, S, D]</code> →
+      bmm.<br />
+      GQA head replication: <code>K/V[B,14,S,256]</code> →
+      <strong>unsqueeze(2)</strong> → <strong>expand(-1,-1,2,-1,-1)</strong> → <strong>flatten(1,2)</strong> → <code>[B,28,S,256]</code>.<br />
+      After SDPA: <code>[B,H,S,D]</code> → <strong>transpose(1,2)</strong> →
+      <strong>clone(contiguous_format)</strong> → output projection.
+    </div>
+  </div>
+
+  <div class="arch-card">
+    <div class="arch-card-title">MoE Routing &amp; Dispatch (every other layer)</div>
+    <div class="arch-card-body">
+      Router logits → <strong>softmax</strong> → top-k selection.<br />
+      Token dispatch: <strong>select/narrow</strong> to slice token subsets per expert →
+      expert matmul →
+      <strong>cat</strong> to merge outputs back.<br />
+      Expert weight matrix: static <strong>split</strong> across experts (dim=0).
+    </div>
+  </div>
+
+  <div class="arch-card">
+    <div class="arch-card-title">Linear (nn.Linear, every projection)</div>
+    <div class="arch-card-body">
+      3D input <code>[B, S, H]</code> → <strong>view([B*S, H])</strong> → mm → <strong>view([B, S, H_out])</strong>.<br />
+      <em>Eliminated</em> by Spyre's <code>mm_to_bmm_pass</code>; replaced with bmm on 3D inputs, so these reshapes disappear from the compiled graph.
+    </div>
+  </div>
+
+  <div class="arch-card">
+    <div class="arch-card-title">RoPE positional embeddings</div>
+    <div class="arch-card-body">
+      Frequency tensor construction uses <strong>unsqueeze</strong> + <strong>expand</strong> for broadcasting.<br />
+      Query/key split into halves: <strong>split</strong> or <strong>narrow</strong> along head_dim → rotate → <strong>cat</strong> to recombine.
+    </div>
+  </div>
+
+  <div class="arch-card">
+    <div class="arch-card-title">KV Cache (inference)</div>
+    <div class="arch-card-body">
+      Cache update: <strong>cat</strong> past and current K/V along sequence dimension.<br />
+      Shapes: <code>[B, 14, past_len+S, 256]</code>. Stick boundary at <code>past_len</code> — only safe if past_len is a multiple of 64 (fp16 stick size).
+    </div>
+  </div>
+
+  
+  <h2>Per-Operation Support Matrix</h2>
+
+  <div class="legend">
+    <span class="legend-item"><span class="badge badge-green">Handled</span> Native Spyre lowering or zero-copy view</span>
+    <span class="legend-item"><span class="badge badge-yellow">Partial</span> Works but with materialization cost</span>
+    <span class="legend-item"><span class="badge badge-red">Risk</span> CPU fallback or likely failure</span>
+    <span class="legend-item"><span class="badge badge-gray">Upstream</span> Falls through to Inductor default path</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Operation</th>
+        <th>Used in Gemma 4?</th>
+        <th>Where</th>
+        <th>Typical Shapes (B=1, S=512)</th>
+        <th class="col-freq">Per-layer count</th>
+        <th class="col-status">Spyre status</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr>
+        <td class="col-op">reshape / view</td>
+        <td>Yes — high freq.</td>
+        <td>QKV head-split, output proj, RoPE, MoE dispatch</td>
+        <td><code>[1,512,3584]→[1,512,28,128]</code></td>
+        <td class="col-freq">10–14×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          C++ <code>aten::view</code> PrivateUse1 impl handles compatible strides. Incompatible reshapes fall to <code>spyre::reshape_via_cpu</code> (explicit CPU round-trip). Check: last dim must align to 64 (fp16) or 32 (fp32) sticks.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">permute</td>
+        <td>Yes — critical path</td>
+        <td>Attention Q/K/V: <code>[B,S,H,D]→[B,H,S,D]</code></td>
+        <td><code>[1,512,28,256]→[1,28,512,256]</code></td>
+        <td class="col-freq">3–4×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          <code>permute_fusion</code> is explicitly disabled in <code>patches.py</code>. Produces non-contiguous strides → <strong>restickify (data copy) always injected</strong> before bmm. Correct at <code>head_dim=256</code> (div by 64). Perf cost: ~3 extra copy nodes per layer.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">transpose</td>
+        <td>Yes — critical path</td>
+        <td>K transpose for QKᵀ; SDPA output <code>[B,H,S,D]→[B,S,H,D]</code></td>
+        <td><code>[1,28,512,256]→[1,28,256,512]</code></td>
+        <td class="col-freq">2–4×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          Handled in Spyre's SDPA decomposition (<code>decompositions.py:564,596</code>). Zero-copy <code>ReinterpretView</code> when the transposition doesn't cross a stick boundary; restickify otherwise (e.g. transposing the S×D dims when D=256 is stick-aligned — usually safe).
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">clone</td>
+        <td>Yes — SDPA output</td>
+        <td>After <code>transpose(1,2)</code> in SDPA to enforce contiguous layout</td>
+        <td><code>[1,512,28,256]</code></td>
+        <td class="col-freq">1×</td>
+        <td class="col-status"><span class="badge badge-green">Handled</span></td>
+        <td>
+          Dedicated Spyre lowering at <code>lowering.py:757</code>. Freezes stride order to honor <code>memory_format=contiguous_format</code>. Without this fix, non-contiguous strides from the upstream permute would break the stickify pass.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">contiguous</td>
+        <td>Yes — implicit</td>
+        <td>Weight prep, KV cache, output proj input</td>
+        <td>Various</td>
+        <td class="col-freq">1–3×</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          Lowers to <code>aten.clone.default</code> with <code>memory_format=contiguous_format</code> which hits the Spyre clone lowering above — so it's effectively handled. However, any non-contiguous input triggers a full data copy.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">unsqueeze</td>
+        <td>Yes — GQA, RoPE</td>
+        <td>GQA key/value head broadcast; RoPE freq tensor shaping</td>
+        <td><code>[1,14,512,256]→[1,14,1,512,256]</code></td>
+        <td class="col-freq">2–4×</td>
+        <td class="col-status"><span class="badge badge-green">Handled</span></td>
+        <td>
+          Pure metadata op (no data copy). Zero-cost via <code>ReinterpretView</code> in Inductor. Adds/removes a size-1 dim — compatible with Spyre stick layout as long as data dims are aligned.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">expand</td>
+        <td>Yes — GQA, RoPE</td>
+        <td>GQA: replicate 14 KV heads to 28 Q heads; RoPE broadcasting</td>
+        <td><code>[1,14,1,512,256]→[1,14,2,512,256]</code></td>
+        <td class="col-freq">2–4×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          Produces stride-0 (virtual) tensors. <strong>Spyre bmm cannot consume stride-0 inputs directly</strong> — restickify materializes them before the matmul. Handled inside <code>decompositions.py:562</code>. Cost: one full materialization copy per GQA layer.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">flatten</td>
+        <td>Yes — GQA merge</td>
+        <td>GQA: after expand, <code>flatten(1,2)</code> merges group and head dims</td>
+        <td><code>[1,14,2,512,256]→[1,28,512,256]</code></td>
+        <td class="col-freq">2×</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          Decomposes to <code>view</code>/<code>reshape</code> in Dynamo. Falls into the same view path as <code>reshape</code>. No explicit Spyre lowering; should work if dims align to stick boundaries. Handled in <code>decompositions.py:562</code> context.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">cat</td>
+        <td>Yes — KV cache, RoPE, MoE</td>
+        <td>KV cache concat along seq; RoPE re-join; MoE expert output merge</td>
+        <td><code>[1,14,512,256]</code> concat on dim=2</td>
+        <td class="col-freq">2–4×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          Dedicated Spyre lowering at <code>lowering.py:962</code> using <code>ir.SliceView</code> + <code>mutate_to</code>. <strong>Critical risk</strong>: KV cache <code>cat</code> boundary offset must be a multiple of 64 (fp16). If <code>past_seq_len</code> is not stick-aligned, the slice write will be misaligned — potential correctness issue or compilation error.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">split</td>
+        <td>Yes — RoPE, MoE</td>
+        <td>RoPE: split head_dim into two halves for rotation; MoE: split expert weight tensors</td>
+        <td><code>[1,28,512,256]</code> split on dim=-1 at 128</td>
+        <td class="col-freq">2–4×</td>
+        <td class="col-status"><span class="badge badge-yellow">Partial</span></td>
+        <td>
+          Falls to upstream Inductor via <code>ir.SliceView</code>. RoPE split at <code>head_dim//2=128</code> — safe (128 is a multiple of 64). MoE expert splits may land at non-stick boundaries depending on expert hidden size → potential restickify or correctness issue.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">select</td>
+        <td>Yes — token routing</td>
+        <td>MoE: select token rows per expert from <code>[B*S, H]</code></td>
+        <td><code>[512, 3584]</code> select on dim=0</td>
+        <td class="col-freq">2–8× (MoE layers)</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          Falls to upstream Inductor via <code>ir.SliceView</code> / <code>as_strided</code>. No explicit Spyre registration. Dynamic token counts (not static shapes) could break Dynamo tracing with symbolic shapes — a significant risk for MoE models at inference.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">narrow</td>
+        <td>Yes — attention masking</td>
+        <td>Sliding window attention: crop K/V to local window; sequence slicing</td>
+        <td><code>[1,28,512,256]</code> narrow on dim=2 to window size</td>
+        <td class="col-freq">1–2× (local attn layers)</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          Falls to <code>ir.SliceView</code>. Works if window start offset is stick-aligned. Sliding window size in Gemma 4 = 4096 tokens — at inference with seq_len &lt; window size this is a no-op, so low risk for short sequences.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">squeeze</td>
+        <td>Possibly — batch dim</td>
+        <td>Batch-size-1 squeeze after output projection; RMSNorm internals</td>
+        <td><code>[1,512,3584]→[512,3584]</code></td>
+        <td class="col-freq">0–2×</td>
+        <td class="col-status"><span class="badge badge-green">Handled</span></td>
+        <td>
+          Metadata-only view; handled via C++ view impl. Zero-cost as long as the squeezed dim is 1.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">stack</td>
+        <td>Possibly — KV pairs</td>
+        <td>Some implementations stack Q+K or past+current KV instead of cat</td>
+        <td><code>[1,14,S,256]</code> stacked on new dim</td>
+        <td class="col-freq">0–2×</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          Registered as a compile-kernel in <code>eager.py</code>. Decomposes to <code>unsqueeze + cat</code>. Inherits <code>cat</code> stick-alignment requirement.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">repeat</td>
+        <td>Unlikely</td>
+        <td>Not in standard Gemma 4 forward pass; may appear in some RoPE variants</td>
+        <td>—</td>
+        <td class="col-freq">0</td>
+        <td class="col-status"><span class="badge badge-red">Risk</span></td>
+        <td>
+          <code>aten.repeat.out</code> is in the <strong>CPU fallback list</strong> (<code>fallbacks.py:240</code>). If encountered, the tensor will round-trip to CPU. Can cause graph breaks.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">unbind</td>
+        <td>Unlikely</td>
+        <td>Not in standard Gemma 4 forward; occasionally used in older RoPE impls</td>
+        <td>—</td>
+        <td class="col-freq">0</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>
+          No Spyre-specific handling. Falls to upstream <code>as_strided</code> / <code>select</code>. Low risk but untested.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">unfold</td>
+        <td>No (conv only)</td>
+        <td>Only used in <code>conv2d_via_bmm</code> decomposition — Gemma 4 has no conv layers</td>
+        <td>—</td>
+        <td class="col-freq">0</td>
+        <td class="col-status"><span class="badge badge-red">Risk</span></td>
+        <td>
+          <code>spyre::unfold</code> at <code>customops.py:409</code> is a <strong>CPU-backed fallback</strong>. Not relevant for Gemma 4 (no conv), but would fail silently via CPU if encountered.
+        </td>
+      </tr>
+
+      <tr>
+        <td class="col-op">flip</td>
+        <td>No</td>
+        <td>Not present in Gemma 4 architecture</td>
+        <td>—</td>
+        <td class="col-freq">0</td>
+        <td class="col-status"><span class="badge badge-gray">Upstream</span></td>
+        <td>No Spyre handling, no fallback registered. Would fall to Inductor default. Untested.</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  
+  <h2>Key Risks for Gemma 4 on torch-spyre</h2>
+  <div class="risk-list">
+
+    <div class="risk-card red">
+      <div class="risk-icon">🔴</div>
+      <div>
+        <div class="risk-title">KV Cache cat boundary alignment</div>
+        <div class="risk-body">
+          <code>cat</code> along the sequence dimension requires the existing cache length (<code>past_seq_len</code>) to be a multiple of 64 (fp16) or 32 (fp32). Dynamic prefill lengths break this. Mitigation: pad to stick boundaries or use static shapes only. File: <code>lowering.py:962</code>, <code>customops.py</code> <code>spyre::slice</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card red">
+      <div class="risk-icon">🔴</div>
+      <div>
+        <div class="risk-title">MoE dynamic token dispatch — select/narrow with symbolic shapes</div>
+        <div class="risk-body">
+          MoE routing assigns different numbers of tokens to each expert — the count is data-dependent, not statically known. Dynamo with <code>torch.compile</code> requires static shapes. This is <strong>the primary blocker for MoE inference</strong>. Workaround: <code>torch.compile(..., dynamic=False)</code> with fixed batch/sequence sizes, or mark token count as static.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card red">
+      <div class="risk-icon">🔴</div>
+      <div>
+        <div class="risk-title">reshape — incompatible layout falls to spyre::reshape_via_cpu</div>
+        <div class="risk-body">
+          When a reshape is not representable as a zero-copy strided view (e.g., reshaping across stick-straddling dims), it silently routes to <code>spyre::reshape_via_cpu</code> (<code>customops.py:453</code>) — a full CPU round-trip. In a 46-layer model this can cause significant latency and graph breaks. Identify all non-contiguous reshapes in the traced graph before benchmarking.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card yellow">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">permute → restickify per attention layer (performance)</div>
+        <div class="risk-body">
+          Every <code>permute(0,2,1,3)</code> in attention (3–4× per layer × 46 layers = ~138–184 restickify nodes) injects a full data copy. <code>permute_fusion</code> is disabled in <code>patches.py</code>. This is expected behavior but is a significant performance overhead. Benchmark against CPU/GPU to quantify.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card yellow">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">expand (stride-0) materialization for GQA</div>
+        <div class="risk-body">
+          GQA head replication via <code>unsqueeze+expand+flatten</code> always materializes the expanded tensor before bmm (one copy per layer pair). Handled correctly in <code>decompositions.py:562</code> but adds memory and compute overhead proportional to <code>num_kv_heads × expansion_factor × S × head_dim</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card yellow">
+      <div class="risk-icon">⚠️</div>
+      <div>
+        <div class="risk-title">RoPE split at head_dim//2 — safe only if ≥64 alignment</div>
+        <div class="risk-body">
+          Gemma 4's <code>head_dim=256</code>, so <code>split</code> at 128 is stick-aligned (128 mod 64 = 0). This is safe. However, if a variant uses <code>head_dim=128</code> (split at 64) or <code>head_dim=64</code> (split at 32), the second half would not be stick-aligned for fp16 → potential restickify or layout error.
+        </div>
+      </div>
+    </div>
+
+    <div class="risk-card green">
+      <div class="risk-icon">✅</div>
+      <div>
+        <div class="risk-title">Shapes are generally stick-aligned for the 26B-A4B config</div>
+        <div class="risk-body">
+          <code>hidden_size=3584</code> (3584 mod 64 = 0), <code>head_dim=256</code> (256 mod 64 = 0), <code>num_heads=28</code>, <code>num_kv_heads=14</code>. All key dimensions are multiples of 64. This means most view operations will be zero-copy or safely restickified without correctness issues — assuming fixed sequence lengths.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  
+  <h2>Recommended Test Cases</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Priority</th>
+        <th>Test scenario</th>
+        <th>What to verify</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-red">P0</span></td>
+        <td>Single-layer attention forward (static shapes, no KV cache)</td>
+        <td><code>permute+bmm+transpose+clone</code> correctness vs CPU</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-red">P0</span></td>
+        <td>GQA head replication: <code>unsqueeze+expand+flatten+bmm</code></td>
+        <td>Output matches CPU reference; check for restickify insertion in graph</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-red">P0</span></td>
+        <td><code>cat</code> with stick-aligned and non-aligned offsets</td>
+        <td>Correctness; assert error on non-aligned <code>past_seq_len</code></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-yellow">P1</span></td>
+        <td>RoPE: <code>split(128, dim=-1) + rotate + cat</code></td>
+        <td>Correctness; check no <code>reshape_via_cpu</code> in compiled graph</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-yellow">P1</span></td>
+        <td>MoE dispatch with <em>fixed</em> tokens-per-expert (static shapes)</td>
+        <td>Compiled graph does not graph-break; <code>select/narrow</code> correct</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-yellow">P1</span></td>
+        <td>Reshape across stick boundary (e.g. <code>[1,512,3584]→[512,3584]</code>)</td>
+        <td>Verify zero-copy path used; no <code>reshape_via_cpu</code> fallback</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">P2</span></td>
+        <td>KV cache decode step (seq_len=1, past_len=N)</td>
+        <td><code>cat</code> with <code>past_len=64, 128, 512</code> (stick-aligned multiples)</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">P2</span></td>
+        <td>Full forward pass of one Gemma 4 transformer block (static shapes)</td>
+        <td>End-to-end correctness; count restickify nodes in Inductor graph</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>Relevant Source Files</h2>
+  <table>
+    <thead><tr><th>File</th><th>Relevance</th></tr></thead>
+    <tbody>
+      <tr><td><code>torch_spyre/_inductor/lowering.py:757</code></td><td>Spyre clone lowering (memory_format fix)</td></tr>
+      <tr><td><code>torch_spyre/_inductor/lowering.py:962</code></td><td>Spyre cat lowering (SliceView-based)</td></tr>
+      <tr><td><code>torch_spyre/_inductor/decompositions.py:560–596</code></td><td>SDPA decomp — permute/expand/transpose/clone chain</td></tr>
+      <tr><td><code>torch_spyre/_inductor/customops.py:398,453</code></td><td>spyre::unfold and spyre::reshape_via_cpu (CPU fallbacks)</td></tr>
+      <tr><td><code>torch_spyre/csrc/spyre_views.cpp:230</code></td><td>C++ aten::view, _reshape_alias, as_strided, unfold registrations</td></tr>
+      <tr><td><code>torch_spyre/ops/fallbacks.py:240</code></td><td>aten.repeat.out CPU fallback registration</td></tr>
+      <tr><td><code>torch_spyre/_inductor/patches.py</code></td><td>permute_fusion disabled for Spyre</td></tr>
+    </tbody>
+  </table>
+
+  <footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

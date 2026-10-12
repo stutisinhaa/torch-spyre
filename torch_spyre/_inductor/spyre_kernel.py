@@ -1,3 +1,4 @@
+import os
 # Copyright 2025 The Torch-Spyre Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +22,17 @@ from abc import ABC
 import torch
 import sympy
 
+<<<<<<< Updated upstream
 from torch_spyre._C import DataFormats, ElementArrangement
+=======
+try:
+    from torch_spyre._C import DataFormats
+except (ImportError, ModuleNotFoundError):
+    # Stub DataFormats when _C is not available
+    class DataFormats:
+        """Stub DataFormats class for when _C module is not available"""
+        pass
+>>>>>>> Stashed changes
 
 from torch._inductor.scheduler import SchedulerNode
 from torch._inductor.codegen.common import (
@@ -514,7 +525,19 @@ def _tile_advance_expr_from_dep(
 class SpyreKernel(Kernel[CSEVariable]):
     overrides = SpyreOpFuncs  # type: ignore[assignment]
 
+<<<<<<< Updated upstream
     def __init__(self, pool_size: int = 0) -> None:
+=======
+    # MOCK_DEVICE: Disable C++ codegen in mock mode to avoid CSEVariable repr bugs
+    @classmethod
+    def should_use_cpp_wrapper(cls):
+        """Check if C++ wrapper should be used. Disabled in mock mode."""
+        if os.environ.get("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+            return False
+        return True
+
+    def __init__(self) -> None:
+>>>>>>> Stashed changes
         super().__init__()
         self.op_specs: list[OpSpec | UnimplementedOp | LoopSpec] = []
         self.spyre_kernel_args: list[Tuple[str, TensorArg]] = []
@@ -1192,6 +1215,9 @@ class SpyreKernel(Kernel[CSEVariable]):
                 if isinstance(input, TensorAccess):
                     args.append(self.create_tensor_arg(True, input.name, input))
                 else:
+                    print(f"[DEBUG_STORE] Buffer '{name}': op='{value.op}', arg type={type(input).__name__}")
+                    if isinstance(input, PointwiseOp):
+                        print(f"[DEBUG_STORE]   Inner PointwiseOp.op='{input.op}', args types={[type(a).__name__ for a in input.arguments]}")
                     raise Unsupported(f"unexpected argument {input} to {value.op}")
             args.append(self.create_tensor_arg(False, real_dst_name, dst))
             op_info.update(value.op_info)
@@ -1855,6 +1881,22 @@ def simplify_op_spec(
                 arg.work_division, work_division_remap
             )
         arg.device_size = t["size"]
+
+        # MOCK DEVICE FIX: Ensure stick dimension has correct size based on dtype
+        # align_tensors may compute device_size with incorrect stick size (e.g., 2 instead of 64)
+        # This causes "Mod(d1, 2)" errors when elems_per_stick=64
+        if hasattr(arg, 'device_dtype') and hasattr(arg.device_dtype, 'elems_per_stick'):
+            expected_stick_size = arg.device_dtype.elems_per_stick()
+            if isinstance(arg.device_size, (list, tuple)) and len(arg.device_size) > 0:
+                if arg.device_size[-1] != expected_stick_size and arg.device_size[-1] < expected_stick_size:
+                    # Fix incorrect stick size
+                    size_list = list(arg.device_size)
+                    import os
+                    if os.environ.get("TORCH_SPYRE_MOCK_DEVICE", "0") == "1":
+                        print(f"[MOCK_DEVICE][FIX] Correcting device_size[-1] from {arg.device_size[-1]} to {expected_stick_size}")
+                    size_list[-1] = expected_stick_size
+                    arg.device_size = tuple(size_list) if isinstance(arg.device_size, tuple) else size_list
+
         arg.device_coordinates = t["coordinates"]
 
         # Apply indirect_access_subs after align_tensors, so that indirect symbols

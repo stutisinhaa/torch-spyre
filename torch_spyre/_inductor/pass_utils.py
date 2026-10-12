@@ -1182,7 +1182,9 @@ def find_reduction_var(inputs: Sequence[MemoryDep], out_dep: MemoryDep) -> sympy
     } - out_dep.index.free_symbols
     if len(reduction_vars) != 1:
         raise Unsupported(
-            f"expected exactly 1 reduction variable, got {reduction_vars}"
+            f"expected exactly 1 reduction variable across reduction dimensions, "
+            f"got {len(reduction_vars)} ({reduction_vars}); the backend supports "
+            f"at most 1."
         )
     return next(iter(reduction_vars))
 
